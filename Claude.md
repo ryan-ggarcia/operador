@@ -131,8 +131,15 @@ Operand custa cerca de R$ 2.000/mês, e a meta é reduzir esse valor.
 O usuário quer o esqueleto completo do sistema, com regras de negócio, telas,
 campos e fluxos, usando o Operand como referência. Os dados da agência serão
 cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
-- **Como:** navegar pelo Operand no Chrome do usuário (extensão Claude in
-  Chrome, com o login dele), um módulo por vez.
+- **Como:** navegar pelo Operand no Chrome do usuário, com o login dele, um
+  módulo por vez. A extensão Claude in Chrome ainda não está ligada ao Claude
+  Code (falta o conector; `/chrome` deve configurar). Por isso o mapeamento
+  usa uma **janela separada do Chrome** com perfil próprio e porta de
+  depuração local 9222 (o Chrome 136+ não abre a porta no perfil padrão). O
+  usuário faz login nela, e o agente lê por CDP e pelo MCP `rea`, bloqueando
+  toda requisição que não seja GET. Para ver formulários e menus de ação, o
+  agente lê o JS do front em vez de clicar; o classificador do modo automático
+  recusa cliques em "Adicionar", "Duplicar" e similares.
 - **Saída:** um arquivo por módulo em `docs/operand/`, com telas, campos (nome,
   tipo, obrigatoriedade, validações), fluxos, regras de negócio, relações com
   outros módulos e permissões.
@@ -143,11 +150,11 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
   colocar nos documentos dados reais de clientes da agência.
 
 ### Status e próximos passos
-1. **Agora:** o usuário vai instalar a extensão Claude in Chrome. Ao retomar,
-   verificar se as ferramentas do Chrome estão disponíveis na sessão; se não
-   estiverem, pedir para reiniciar o Claude Code.
-2. Perguntar por qual módulo do Operand começar e mapear um módulo por vez em
-   `docs/operand/`.
+1. Mapeados: **Projetos** (`docs/operand/projetos.md`, 13/10/2026). Próximo
+   sugerido: **Jobs** (pauta, kanban, timeline, tarefas, aprovações), que
+   completa o módulo `projects` do operador.
+2. Continuar um módulo por vez em `docs/operand/`, perguntando ao usuário a
+   ordem.
 3. Depois do mapeamento, revisar a lista de módulos e modelar o banco.
 4. Só então criar o esqueleto do código (`frontend/`, `backend/`,
    `docker-compose.yml`).
