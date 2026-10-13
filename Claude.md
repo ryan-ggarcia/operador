@@ -162,13 +162,19 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
    (`docs/operand/propostas.md`; a agência quase não usa o módulo; faltam a
    lista real da tabela de preços e dos encargos). **Timesheet**
    (`docs/operand/timesheet.md`, só do código), **Cadastros**
-   (`docs/operand/cadastros.md`) e **Financeiro** (`docs/operand/financeiro.md`).
+   (`docs/operand/cadastros.md`), **Financeiro** (`docs/operand/financeiro.md`),
+   **Mídia** (`docs/operand/midia.md`) e **Produção**
+   (`docs/operand/producao.md`; sem uso desde meados de 2023). Faltam:
+   Conversas, Dashboard, Relatórios (parte já coberta nos módulos),
+   Configurações gerais (empresas, equipes, módulos, integrações) e Acesso
+   Cliente.
    A sessão do Operand cai com frequência, provavelmente por login simultâneo
    do usuário em outro navegador ("login concorrente").
    **Uso real na conta (13/10/2026):** 4.314 projetos, ~38 mil jobs, 6.188
    mídias, 1.028 produções, 7 propostas, 0 contratos de fee, 3 lançamentos
-   financeiros. Mídia e Produção são muito usadas e não estão na lista de
-   módulos da v1; Propostas e Financeiro quase não são usados. A guarda de escrita
+   financeiros. Mídia é muito usada e não está na lista de módulos da v1;
+   Produção tem mais de mil documentos, mas está parada desde 2023;
+   Propostas e Financeiro quase não são usados. A guarda de escrita
    precisa liberar a renovação do login (`securetoken.googleapis.com` e
    `verifyCustomToken`); sem isso, a sessão cai.
 2. Continuar um módulo por vez em `docs/operand/`, perguntando ao usuário a
