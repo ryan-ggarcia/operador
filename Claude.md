@@ -65,33 +65,50 @@ Claude**: analisar jobs, relatórios e os demais dados do sistema.
 | Testes | Escritos desde o início, junto com o código: unitários das regras de negócio com Jest (padrão do Nest) |
 
 ### Módulos (primeira versão)
+Definida com o usuário em 13/10/2026, depois do mapeamento. Tabelas e
+interfaces de cada módulo em `docs/modelo-de-dados.md`.
+
 | Módulo | Responsabilidade |
 |---|---|
-| `auth` | Usuários da agência, perfis de acesso, login e emissão de JWT |
-| `projects` | Projetos, jobs, tarefas, prazos e aprovações |
-| `timesheet` | Horas trabalhadas por pessoa, job e cliente |
-| `finance` | Orçamentos, contas a pagar e receber, faturamento e fluxo de caixa |
-| `crm` | Clientes, contatos, oportunidades e propostas comerciais |
+| `auth` | Usuários, login e JWT, perfis de acesso e níveis por módulo, colaboradores (RH e valor/hora), funções e equipes |
+| `crm` | Cadastro de pessoas com papéis (cliente, fornecedor, prestador, veículo), contatos, grupos de clientes |
+| `projects` | Projetos, jobs, tarefas, status, briefings, comentários, aprovação de peças, templates e numeração dos documentos |
+| `timesheet` | Apontamento de horas (cronômetro e manual) e jornadas |
+| `media` | Mídias (PI): veículo, peças, grades, comissão e valor líquido (**sem CENP**, por decisão do usuário) |
+| `production` | Produções: cotação com fornecedores, pedidos de produção e encargos |
+| `finance` | Receitas e despesas, parcelas, contas, categorias, centros de custo, transferências e fluxo de caixa |
+| `files` | Anexos de todos os módulos (Supabase Storage) |
+| `notifications` | Avisos no sistema e por e-mail |
+| `settings` | Dados da agência (razão social, CNPJ, logo) usados nos PDFs |
 | `ai` | Integração com o Claude: análise de jobs, relatórios e dados dos outros módulos |
 
-A lista pode mudar depois do mapeamento do Operand.
+Fora da v1: Propostas e contratos de fee, Conversas, Agenda, Acesso Cliente,
+CENP-Meios, webhooks e API, boleto e NFS-e, conciliação bancária e Timesheet
+Automático.
 
 ### Estrutura de pastas
 ```
 operador/
 ├── docker-compose.yml
-├── docs/operand/        # mapeamento funcional do Operand, um arquivo por módulo
+├── docs/
+│   ├── modelo-de-dados.md  # módulos, schemas, tabelas e interfaces
+│   └── operand/            # mapeamento funcional do Operand, um arquivo por módulo
 ├── frontend/            # Next.js (TypeScript, .tsx), Tailwind + shadcn/ui
 └── backend/             # um app Nest.js
-    ├── prisma/          # schema do Prisma, um schema PostgreSQL por módulo
+    ├── prisma/schema/   # um arquivo .prisma por módulo, um schema PostgreSQL cada
     └── src/
         ├── shared/      # autenticação JWT, utilitários
         └── modules/
             ├── auth/
+            ├── crm/
             ├── projects/
             ├── timesheet/
+            ├── media/
+            ├── production/
             ├── finance/
-            ├── crm/
+            ├── files/
+            ├── notifications/
+            ├── settings/
             └── ai/
 ```
 
@@ -186,13 +203,14 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
    precisa liberar a renovação do login (`securetoken.googleapis.com` e
    `verifyCustomToken`); sem isso, a sessão cai.
 2. ~~Continuar um módulo por vez em `docs/operand/`~~ (concluído).
-3. **Agora:** revisar a lista de módulos da v1 com o usuário e modelar o
-   banco.
+3. Lista de módulos da v1 definida (13/10/2026: sem CENP; Financeiro e
+   Produção entram). **Agora:** o usuário revisa `docs/modelo-de-dados.md` e
+   responde os "pontos para decidir" do fim do documento.
 4. Só então criar o esqueleto do código (`frontend/`, `backend/`,
    `docker-compose.yml`).
 5. Ainda não há código do aplicativo. O repositório tem `README.md`,
-   `.gitignore`, este arquivo, `docs/operand/` e a skill
-   `.claude/skills/mapear-operand`.
+   `.gitignore`, este arquivo, `docs/operand/`, `docs/modelo-de-dados.md` e
+   a skill `.claude/skills/mapear-operand`.
 
 ---
 
