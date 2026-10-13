@@ -158,7 +158,17 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
 ### Status e próximos passos
 1. Mapeados em 13/10/2026: **Projetos** (`docs/operand/projetos.md`) e
    **Jobs** (`docs/operand/jobs.md`; o kanban não carrega cards com a guarda
-   ativa, e a estrutura veio do código). A guarda de escrita
+   ativa, e a estrutura veio do código). **Propostas**
+   (`docs/operand/propostas.md`; a agência quase não usa o módulo; faltam a
+   lista real da tabela de preços e dos encargos). **Timesheet**
+   (`docs/operand/timesheet.md`, só do código), **Cadastros**
+   (`docs/operand/cadastros.md`) e **Financeiro** (`docs/operand/financeiro.md`).
+   A sessão do Operand cai com frequência, provavelmente por login simultâneo
+   do usuário em outro navegador ("login concorrente").
+   **Uso real na conta (13/10/2026):** 4.314 projetos, ~38 mil jobs, 6.188
+   mídias, 1.028 produções, 7 propostas, 0 contratos de fee, 3 lançamentos
+   financeiros. Mídia e Produção são muito usadas e não estão na lista de
+   módulos da v1; Propostas e Financeiro quase não são usados. A guarda de escrita
    precisa liberar a renovação do login (`securetoken.googleapis.com` e
    `verifyCustomToken`); sem isso, a sessão cai.
 2. Continuar um módulo por vez em `docs/operand/`, perguntando ao usuário a
