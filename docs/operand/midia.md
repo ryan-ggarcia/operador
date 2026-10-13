@@ -265,7 +265,7 @@ programa/formato), praça (nome, sigla, estado), configuração CENP por empresa
 | `projects` | Mídia dentro de projeto; contadores e atrasados do projeto |
 | `crm` / cadastros | Cliente, veículo (pessoa com papel veículo) e contatos do veículo |
 | `finance` | Faturas por tipo de faturamento (veículo × agência × cliente), comissão, honorários |
-| `timesheet` | Horas apontadas na mídia |
+| `timesheet` | Horas apontadas na mídia, só com a opção "timesheet em todos os módulos" ligada (desligada na conta; ver [configuracoes.md](configuracoes.md#16-módulos-e-funções-vista--legado)) |
 | Integrações | CENP-Meios (arquivo e transmissão), Globo Ads |
 | `ai` | Ferramentas sugeridas: investimento por cliente, veículo e tipo de mídia; mídias aguardando PI ou NF |
 

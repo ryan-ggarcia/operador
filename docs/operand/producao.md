@@ -256,7 +256,7 @@ pagamento, observações ao cliente e ao fornecedor, briefing).
 | `crm` / cadastros | Cliente, contato do cliente e fornecedor (pessoa com papel fornecedor; pode ser criado na cotação) |
 | `finance` | Faturas por fornecedor conforme o tipo de faturamento; comissão, honorários, encargos e repasse |
 | Propostas | Encargos compartilhados |
-| `timesheet` | Horas apontadas na produção **(inferido, como em jobs e mídia)** |
+| `timesheet` | Horas apontadas na produção, só com a opção "timesheet em todos os módulos" ligada (desligada na conta; ver [configuracoes.md](configuracoes.md#16-módulos-e-funções-vista--legado)) |
 | `ai` | Ferramentas sugeridas: custo de terceiros por cliente e projeto; comparação de cotações por fornecedor |
 
 ---

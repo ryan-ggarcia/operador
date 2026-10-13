@@ -237,12 +237,19 @@ colaborador (ver o mapeamento de Cadastros).
   os relatórios de qualidade.
 - Timesheet Automático (pausa pela jornada) e meta produtiva são candidatos a
   depois da v1. A jornada simples (dias e horas) é útil para a timeline.
+- Configuração real da conta (vista depois, em
+  [configuracoes.md](configuracoes.md#19-geral-vista--legado)): **Timesheet
+  Automático desligado**, apontamento **só em jobs** ("timesheet em todos os
+  módulos" desligado), alerta de tarefa sem apontamento desligado e uma única
+  jornada padrão (42h30 por semana, 170 h por mês, meta de 8h30 por dia, 38
+  usuários).
 
 ---
 
 ## 8. Pendências
 
-- Pauta Timesheets e jornadas reais (sem sessão nesta etapa).
+- Pauta Timesheets com dados (sem sessão nesta etapa). ~~Jornadas reais~~:
+  ver acima.
 - Formato dos dados de apontamento (`/v3/components/timesheets`) e da jornada
   (`/v3/workJourney`) com registros.
 - Quem pode editar ou excluir apontamento de outra pessoa.

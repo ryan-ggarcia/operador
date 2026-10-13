@@ -159,15 +159,19 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
 1. Mapeados em 13/10/2026: **Projetos** (`docs/operand/projetos.md`) e
    **Jobs** (`docs/operand/jobs.md`; o kanban não carrega cards com a guarda
    ativa, e a estrutura veio do código). **Propostas**
-   (`docs/operand/propostas.md`; a agência quase não usa o módulo; faltam a
-   lista real da tabela de preços e dos encargos). **Timesheet**
+   (`docs/operand/propostas.md`; a agência quase não usa o módulo; a tabela
+   de preços está vazia e o único encargo é "Sem encargo"). **Timesheet**
    (`docs/operand/timesheet.md`, só do código), **Cadastros**
    (`docs/operand/cadastros.md`), **Financeiro** (`docs/operand/financeiro.md`),
    **Mídia** (`docs/operand/midia.md`) e **Produção**
-   (`docs/operand/producao.md`; sem uso desde meados de 2023). Faltam:
-   Conversas, Dashboard, Relatórios (parte já coberta nos módulos),
-   Configurações gerais (empresas, equipes, módulos, integrações) e Acesso
-   Cliente.
+   (`docs/operand/producao.md`; sem uso desde meados de 2023) e
+   **Configurações gerais** (`docs/operand/configuracoes.md`: perfil,
+   notificações, empresas, usuários e perfis de permissão, equipes, módulos,
+   integrações, webhooks, Acesso Cliente e Geral). Faltam: Conversas, Agenda,
+   Dashboard e Relatórios (parte já coberta nos módulos).
+   A conta tem 38 usuários ativos (todas as licenças) e 1 empresa; Acesso
+   Cliente, Timesheet Automático, CENP e API estão desligados, e só se aponta
+   horas em jobs.
    A sessão do Operand cai com frequência, provavelmente por login simultâneo
    do usuário em outro navegador ("login concorrente").
    **Uso real na conta (13/10/2026):** 4.314 projetos, ~38 mil jobs, 6.188
