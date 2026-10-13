@@ -83,8 +83,9 @@ interfaces de cada módulo em `docs/modelo-de-dados.md`.
 | `ai` | Integração com o Claude: análise de jobs, relatórios e dados dos outros módulos |
 
 Fora da v1: Propostas e contratos de fee, Conversas, Agenda, Acesso Cliente,
-CENP-Meios, webhooks e API, boleto e NFS-e, conciliação bancária e Timesheet
-Automático.
+CENP-Meios, webhooks e API, boleto e NFS-e, conciliação bancária, Timesheet
+Automático e envio de e-mails (extra; na v1 só avisos no sistema). A grade de
+mídia e o faturamento de mídia e produção ficam iguais ao Operand.
 
 ### Estrutura de pastas
 ```
@@ -204,8 +205,8 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
    `verifyCustomToken`); sem isso, a sessão cai.
 2. ~~Continuar um módulo por vez em `docs/operand/`~~ (concluído).
 3. Lista de módulos da v1 definida (13/10/2026: sem CENP; Financeiro e
-   Produção entram). **Agora:** o usuário revisa `docs/modelo-de-dados.md` e
-   responde os "pontos para decidir" do fim do documento.
+   Produção entram) e modelo de dados aprovado (`docs/modelo-de-dados.md`,
+   com as decisões do usuário na seção 7).
 4. Só então criar o esqueleto do código (`frontend/`, `backend/`,
    `docker-compose.yml`).
 5. Ainda não há código do aplicativo. O repositório tem `README.md`,

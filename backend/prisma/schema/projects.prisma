@@ -1,0 +1,391 @@
+// Módulo projects: projetos, jobs, tarefas, status, briefings, comentários,
+// aprovação de peças, templates e numeração dos documentos.
+// clientId, clientContactId e ids de usuários pertencem a outros módulos
+// (crm e auth): guardados só como id, sem relação.
+
+enum ProjectSituation {
+  OPEN
+  ARCHIVED
+  CANCELED
+
+  @@schema("projects")
+}
+
+enum JobSituation {
+  OPEN
+  DONE
+  CANCELED
+
+  @@schema("projects")
+}
+
+enum ProjectDocType {
+  PROJECT
+  JOB
+
+  @@schema("projects")
+}
+
+enum ApprovalSituation {
+  OPEN
+  APPROVED
+  REJECTED
+  CANCELED
+
+  @@schema("projects")
+}
+
+enum ApprovalDecision {
+  APPROVE
+  REJECT
+
+  @@schema("projects")
+}
+
+model Project {
+  id                   String           @id @default(uuid(7)) @db.Uuid
+  /// Número exibido do projeto.
+  number               Int              @unique @default(autoincrement())
+  title                String
+  clientId             String           @db.Uuid
+  description          String?
+  requesterId          String?          @db.Uuid
+  responsibleId        String?          @db.Uuid
+  statusId             String?          @db.Uuid
+  situation            ProjectSituation @default(OPEN)
+  hidden               Boolean          @default(false)
+  /// Projeto "Geral" do cliente, criado pelo sistema (um por cliente).
+  isClientDefault      Boolean          @default(false)
+  desiredDeadline      DateTime?        @db.Timestamptz(3)
+  budget               Decimal          @default(0) @db.Decimal(14, 2)
+  /// Último número usado pelos documentos do projeto (jobs, mídias,
+  /// produções), que dividem a mesma sequência.
+  lastDocumentSequence Int              @default(0)
+  closedAt             DateTime?        @db.Timestamptz(3)
+  situationChangedById String?          @db.Uuid
+  createdAt            DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime         @updatedAt @db.Timestamptz(3)
+  createdById          String?          @db.Uuid
+  updatedById          String?          @db.Uuid
+
+  status    ProjectStatus?    @relation(fields: [statusId], references: [id])
+  members   ProjectMember[]
+  favorites ProjectFavorite[]
+  jobs      Job[]
+
+  @@unique([clientId], where: { isClientDefault: true }, map: "project_client_default_key")
+  @@index([clientId])
+  @@index([situation])
+  @@map("project")
+  @@schema("projects")
+}
+
+model ProjectMember {
+  projectId String @db.Uuid
+  userId    String @db.Uuid
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
+  @@map("project_member")
+  @@schema("projects")
+}
+
+model ProjectFavorite {
+  projectId String @db.Uuid
+  userId    String @db.Uuid
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@map("project_favorite")
+  @@schema("projects")
+}
+
+model Job {
+  id                   String       @id @default(uuid(7)) @db.Uuid
+  projectId            String       @db.Uuid
+  /// Número no projeto: exibido como <número do projeto>.<sequence>.
+  sequence             Int
+  title                String       @db.VarChar(250)
+  clientId             String       @db.Uuid
+  clientContactId      String?      @db.Uuid
+  responsibleId        String?      @db.Uuid
+  requesterId          String?      @db.Uuid
+  statusId             String?      @db.Uuid
+  situation            JobSituation @default(OPEN)
+  startAt              DateTime?    @db.Timestamptz(3)
+  deadline             DateTime?    @db.Timestamptz(3)
+  deadlineHasTime      Boolean      @default(false)
+  estimatedMinutes     Int?
+  briefing             String?
+  /// Regra de recorrência (ver docs/operand/jobs.md, 2.5).
+  recurrence           Json?
+  closedAt             DateTime?    @db.Timestamptz(3)
+  situationChangedById String?      @db.Uuid
+  createdAt            DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime     @updatedAt @db.Timestamptz(3)
+  createdById          String?      @db.Uuid
+  updatedById          String?      @db.Uuid
+
+  project          Project           @relation(fields: [projectId], references: [id])
+  status           ProjectStatus?    @relation(fields: [statusId], references: [id])
+  members          JobMember[]
+  tasks            Task[]
+  briefingVersions BriefingVersion[]
+
+  @@unique([projectId, sequence])
+  @@index([responsibleId, situation])
+  @@index([clientId])
+  @@index([deadline])
+  @@map("job")
+  @@schema("projects")
+}
+
+model JobMember {
+  jobId  String @db.Uuid
+  userId String @db.Uuid
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, userId])
+  @@index([userId])
+  @@map("job_member")
+  @@schema("projects")
+}
+
+model Task {
+  id            String       @id @default(uuid(7)) @db.Uuid
+  jobId         String       @db.Uuid
+  title         String
+  responsibleId String?      @db.Uuid
+  statusId      String?      @db.Uuid
+  order         Int          @default(0)
+  startAt       DateTime?    @db.Timestamptz(3)
+  deadline      DateTime?    @db.Timestamptz(3)
+  situation     JobSituation @default(OPEN)
+  completedAt   DateTime?    @db.Timestamptz(3)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(3)
+  updatedById   String?      @db.Uuid
+
+  job       Job              @relation(fields: [jobId], references: [id])
+  status    ProjectStatus?   @relation(fields: [statusId], references: [id])
+  dependsOn TaskDependency[] @relation("TaskDependsOn")
+  blocks    TaskDependency[] @relation("TaskBlocks")
+
+  @@index([jobId])
+  @@index([responsibleId, situation])
+  @@map("task")
+  @@schema("projects")
+}
+
+/// A tarefa fica bloqueada até a tarefa de que depende ser concluída.
+model TaskDependency {
+  taskId          String @db.Uuid
+  dependsOnTaskId String @db.Uuid
+
+  task      Task @relation("TaskDependsOn", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOn Task @relation("TaskBlocks", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, dependsOnTaskId])
+  @@map("task_dependency")
+  @@schema("projects")
+}
+
+model BriefingVersion {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  jobId     String   @db.Uuid
+  html      String
+  authorId  String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("briefing_version")
+  @@schema("projects")
+}
+
+/// Status de projetos e de jobs/tarefas (listas separadas por docType).
+model ProjectStatus {
+  id           String         @id @default(uuid(7)) @db.Uuid
+  docType      ProjectDocType
+  name         String
+  color        String
+  order        Int            @default(0)
+  active       Boolean        @default(true)
+  /// Documentos com este status não contam como atrasados.
+  ignoresDelay Boolean        @default(false)
+  system       Boolean        @default(false)
+  groupId      String?        @db.Uuid
+
+  group    ProjectStatusGroup? @relation(fields: [groupId], references: [id])
+  projects Project[]
+  jobs     Job[]
+  tasks    Task[]
+
+  @@index([docType, active])
+  @@map("status")
+  @@schema("projects")
+}
+
+model ProjectStatusGroup {
+  id   String @id @default(uuid(7)) @db.Uuid
+  name String @unique
+
+  statuses ProjectStatus[]
+
+  @@map("status_group")
+  @@schema("projects")
+}
+
+model Comment {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  docType          ProjectDocType
+  docId            String         @db.Uuid
+  authorId         String         @db.Uuid
+  html             String
+  mentionedUserIds String[]       @db.Uuid
+  parentId         String?        @db.Uuid
+  fileId           String?        @db.Uuid
+  pinned           Boolean        @default(false)
+  active           Boolean        @default(true)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(3)
+
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+
+  @@index([docType, docId])
+  @@map("comment")
+  @@schema("projects")
+}
+
+/// Aprovação de peças (arquivos anexados a projetos e jobs).
+model ApprovalRequest {
+  id          String            @id @default(uuid(7)) @db.Uuid
+  fileId      String            @db.Uuid
+  docType     ProjectDocType
+  docId       String            @db.Uuid
+  requesterId String            @db.Uuid
+  approverIds String[]          @db.Uuid
+  deadline    DateTime?         @db.Timestamptz(3)
+  situation   ApprovalSituation @default(OPEN)
+  createdAt   DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime          @updatedAt @db.Timestamptz(3)
+
+  votes   ApprovalVote[]
+  markers ApprovalMarker[]
+
+  @@index([docType, docId])
+  @@index([fileId])
+  @@map("approval_request")
+  @@schema("projects")
+}
+
+model ApprovalVote {
+  id        String           @id @default(uuid(7)) @db.Uuid
+  requestId String           @db.Uuid
+  userId    String           @db.Uuid
+  decision  ApprovalDecision
+  reason    String?
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
+
+  request ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, userId])
+  @@map("approval_vote")
+  @@schema("projects")
+}
+
+/// Marcador sobre a imagem da peça (posição em % da largura e da altura).
+model ApprovalMarker {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  requestId String   @db.Uuid
+  x         Decimal  @db.Decimal(7, 4)
+  y         Decimal  @db.Decimal(7, 4)
+  html      String
+  authorId  String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  request ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@map("approval_marker")
+  @@schema("projects")
+}
+
+model PredefinedBriefing {
+  id      String         @id @default(uuid(7)) @db.Uuid
+  docType ProjectDocType
+  title   String
+  html    String
+  active  Boolean        @default(true)
+
+  @@map("predefined_briefing")
+  @@schema("projects")
+}
+
+model ProjectTemplate {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  title       String
+  briefing    String?
+  active      Boolean  @default(true)
+  createdById String?  @db.Uuid
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  jobs TemplateJob[]
+
+  @@map("project_template")
+  @@schema("projects")
+}
+
+model TemplateJob {
+  id            String  @id @default(uuid(7)) @db.Uuid
+  templateId    String  @db.Uuid
+  title         String
+  responsibleId String? @db.Uuid
+  statusId      String? @db.Uuid
+  briefing      String?
+  order         Int     @default(0)
+
+  template ProjectTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  tasks    TemplateTask[]
+
+  @@map("template_job")
+  @@schema("projects")
+}
+
+model TemplateTask {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  templateJobId String   @db.Uuid
+  title         String
+  responsibleId String?  @db.Uuid
+  order         Int      @default(0)
+  /// Ids de outras tarefas do mesmo job de template das quais esta depende.
+  dependsOnIds  String[] @db.Uuid
+
+  templateJob TemplateJob @relation(fields: [templateJobId], references: [id], onDelete: Cascade)
+
+  @@map("template_task")
+  @@schema("projects")
+}
+
+model ProjectsHistory {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  entityType String
+  entityId   String   @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([entityType, entityId])
+  @@map("history")
+  @@schema("projects")
+}

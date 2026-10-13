@@ -1,0 +1,155 @@
+// Módulo auth: usuários, login, perfis de acesso, colaboradores (RH e
+// valor/hora), funções e equipes.
+
+enum PersonType {
+  PF
+  PJ
+
+  @@schema("auth")
+}
+
+model UserAccount {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  email              String    @unique
+  passwordHash       String
+  name               String
+  avatarFileId       String?   @db.Uuid
+  signatureFileId    String?   @db.Uuid
+  color              String?
+  accessProfileId    String?   @db.Uuid
+  /// Níveis por módulo quando o usuário foge do perfil; nulo = usa o perfil.
+  customPermissions  Json?
+  /// Muda a cada alteração de perfil ou permissão; vai no JWT.
+  permissionsVersion Int       @default(1)
+  isOwner            Boolean   @default(false)
+  mustChangePassword Boolean   @default(true)
+  collaboratorId     String?   @unique @db.Uuid
+  active             Boolean   @default(true)
+  lastLoginAt        DateTime? @db.Timestamptz(3)
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @db.Timestamptz(3)
+
+  accessProfile AccessProfile? @relation(fields: [accessProfileId], references: [id])
+  collaborator  Collaborator?  @relation(fields: [collaboratorId], references: [id])
+  teams         TeamMember[]
+  refreshTokens RefreshToken[]
+
+  @@map("user_account")
+  @@schema("auth")
+}
+
+model AccessProfile {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  name        String   @unique
+  /// Módulo → nível (0, 1, 2, 3, 6, 7) e flags extras.
+  permissions Json
+  system      Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  users UserAccount[]
+
+  @@map("access_profile")
+  @@schema("auth")
+}
+
+/// Dados de RH: acesso restrito e nunca enviados ao Claude.
+model Collaborator {
+  id            String     @id @default(uuid(7)) @db.Uuid
+  personType    PersonType @default(PF)
+  name          String
+  document      String?    @unique
+  legalName     String?
+  rg            String?
+  birthDate     DateTime?  @db.Date
+  phone         String?
+  email         String?
+  address       Json?
+  positionId    String?    @db.Uuid
+  admissionDate DateTime?  @db.Date
+  dismissalDate DateTime?  @db.Date
+  grossSalary   Decimal?   @db.Decimal(14, 2)
+  totalCost     Decimal?   @db.Decimal(14, 2)
+  hourlyRate    Decimal?   @db.Decimal(14, 2)
+  benefits      Json?
+  bankData      Json?
+  pixKeys       Json?
+  cvUrl         String?
+  notes         String?
+  active        Boolean    @default(true)
+  createdAt     DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime   @updatedAt @db.Timestamptz(3)
+  createdById   String?    @db.Uuid
+  updatedById   String?    @db.Uuid
+
+  position Position?    @relation(fields: [positionId], references: [id])
+  user     UserAccount?
+
+  @@map("collaborator")
+  @@schema("auth")
+}
+
+model Position {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  name   String  @unique
+  active Boolean @default(true)
+
+  collaborators Collaborator[]
+
+  @@map("position")
+  @@schema("auth")
+}
+
+model Team {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  name   String  @unique
+  active Boolean @default(true)
+
+  members TeamMember[]
+
+  @@map("team")
+  @@schema("auth")
+}
+
+model TeamMember {
+  teamId String @db.Uuid
+  userId String @db.Uuid
+
+  team Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@map("team_member")
+  @@schema("auth")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_token")
+  @@schema("auth")
+}
+
+model AuthHistory {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  entityType String
+  entityId   String   @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([entityType, entityId])
+  @@map("history")
+  @@schema("auth")
+}

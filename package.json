@@ -1,0 +1,16 @@
+{
+  "name": "operador",
+  "private": true,
+  "description": "Sistema de gestão da agência (sucessor do Operand). Front e back separados; este arquivo só junta as dependências numa node_modules na raiz (npm workspaces).",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run start:dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspace backend",
+    "lint": "npm run lint --workspaces"
+  }
+}

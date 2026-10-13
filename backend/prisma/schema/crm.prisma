@@ -1,0 +1,128 @@
+// Módulo crm: cadastro único de pessoas com papéis (cliente, fornecedor,
+// prestador, veículo), contatos, departamentos e grupos de clientes.
+
+enum PartyPersonType {
+  PF
+  PJ
+
+  @@schema("crm")
+}
+
+model Party {
+  id                    String          @id @default(uuid(7)) @db.Uuid
+  personType            PartyPersonType @default(PJ)
+  /// Nome fantasia.
+  name                  String
+  legalName             String?
+  /// CPF ou CNPJ só com dígitos. O mesmo documento não vira dois cadastros.
+  document              String?         @unique
+  stateRegistration     String?
+  municipalRegistration String?
+  email                 String?
+  phone1                String?
+  phone2                String?
+  website               String?
+  zipCode               String?
+  street                String?
+  number                String?
+  complement            String?
+  district              String?
+  city                  String?
+  state                 String?
+  country               String?         @default("Brasil")
+  isClient              Boolean         @default(false)
+  isSupplier            Boolean         @default(false)
+  isProvider            Boolean         @default(false)
+  isVehicle             Boolean         @default(false)
+  clientGroupId         String?         @db.Uuid
+  bankData              Json?
+  notes                 String?
+  active                Boolean         @default(true)
+  createdAt             DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime        @updatedAt @db.Timestamptz(3)
+  createdById           String?         @db.Uuid
+  updatedById           String?         @db.Uuid
+
+  clientGroup ClientGroup? @relation(fields: [clientGroupId], references: [id])
+  contacts    Contact[]
+  partyNotes  PartyNote[]
+
+  @@index([name])
+  @@index([isClient, active])
+  @@map("party")
+  @@schema("crm")
+}
+
+model Contact {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  partyId      String    @db.Uuid
+  name         String
+  email        String?
+  departmentId String?   @db.Uuid
+  phone1       String?
+  phone2       String?
+  birthDate    DateTime? @db.Date
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+
+  party      Party       @relation(fields: [partyId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  @@index([partyId])
+  @@map("contact")
+  @@schema("crm")
+}
+
+model Department {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  name   String  @unique
+  active Boolean @default(true)
+
+  contacts Contact[]
+
+  @@map("department")
+  @@schema("crm")
+}
+
+model ClientGroup {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  name   String  @unique
+  active Boolean @default(true)
+
+  parties Party[]
+
+  @@map("client_group")
+  @@schema("crm")
+}
+
+model PartyNote {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  partyId   String   @db.Uuid
+  authorId  String   @db.Uuid
+  html      String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  party Party @relation(fields: [partyId], references: [id])
+
+  @@index([partyId])
+  @@map("party_note")
+  @@schema("crm")
+}
+
+model CrmHistory {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  entityType String
+  entityId   String   @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([entityType, entityId])
+  @@map("history")
+  @@schema("crm")
+}

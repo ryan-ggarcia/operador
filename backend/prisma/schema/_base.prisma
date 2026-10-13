@@ -1,0 +1,16 @@
+// Configuração comum do Prisma. Cada módulo tem o seu arquivo nesta pasta e o
+// seu schema PostgreSQL (@@schema). Entre módulos, só se guarda o id: nada de
+// @relation entre schemas. Ver docs/modelo-de-dados.md.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+  previewFeatures     = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["auth", "crm", "projects", "timesheet", "media", "production", "finance", "files", "notifications", "settings", "ai"]
+}

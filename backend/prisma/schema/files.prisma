@@ -1,0 +1,22 @@
+// Módulo files: metadados dos anexos de todos os módulos.
+
+/// Metadados do anexo; o arquivo fica no Supabase Storage (bucket privado).
+/// ownerModule/ownerType/ownerId dizem a que documento ele pertence.
+model StoredFile {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  storageKey   String   @unique
+  originalName String
+  mimeType     String
+  sizeBytes    BigInt
+  ownerModule  String
+  ownerType    String
+  ownerId      String   @db.Uuid
+  description  String?
+  uploadedById String   @db.Uuid
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([ownerModule, ownerType, ownerId])
+  @@map("file")
+  @@schema("files")
+}

@@ -1,0 +1,28 @@
+// Módulo notifications: avisos no sistema e preferências por usuário.
+
+model Notification {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  event     String
+  title     String
+  link      String?
+  payload   Json?
+  readAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, readAt])
+  @@map("notification")
+  @@schema("notifications")
+}
+
+/// email fica guardado para quando o envio de e-mail entrar (extra).
+model NotificationPreference {
+  userId String  @db.Uuid
+  event  String
+  inApp  Boolean @default(true)
+  email  Boolean @default(false)
+
+  @@id([userId, event])
+  @@map("preference")
+  @@schema("notifications")
+}

@@ -1,0 +1,262 @@
+// Módulo production: produções, itens, cotações por fornecedor, pedidos de
+// produção (PP) e encargos. Ver docs/operand/producao.md.
+// clientId, clientContactId e supplierId são do crm; projectId do projects.
+
+enum ProductionSituation {
+  OPEN
+  DONE
+  CANCELED
+
+  @@schema("production")
+}
+
+enum ProductionValueType {
+  PERCENT
+  AMOUNT
+
+  @@schema("production")
+}
+
+enum ProductionBillingType {
+  FLCC
+  FBCC
+  FLCA
+  FL_CCA
+  FBCA
+
+  @@schema("production")
+}
+
+enum PredefinedTextKind {
+  PAYMENT_CONDITION
+  CLIENT_NOTE
+  SUPPLIER_NOTE
+  BRIEFING
+
+  @@schema("production")
+}
+
+model Production {
+  id                String              @id @default(uuid(7)) @db.Uuid
+  projectId         String              @db.Uuid
+  sequence          Int
+  clientId          String              @db.Uuid
+  clientContactId   String?             @db.Uuid
+  title             String
+  responsibleId     String?             @db.Uuid
+  requesterId       String?             @db.Uuid
+  statusId          String?             @db.Uuid
+  situation         ProductionSituation @default(OPEN)
+  deadline          DateTime?           @db.Timestamptz(3)
+  /// Validade da cotação, em dias.
+  validityDays      Int?
+  taxId             String?             @db.Uuid
+  taxPercent        Decimal             @default(0) @db.Decimal(7, 4)
+  paymentConditions String?
+  clientNotes       String?
+  briefing          String?
+  pdfPreferences    Json?
+  /// Totais calculados e gravados para as pautas.
+  totalValue        Decimal             @default(0) @db.Decimal(14, 2)
+  commissionTotal   Decimal             @default(0) @db.Decimal(14, 2)
+  closedAt          DateTime?           @db.Timestamptz(3)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
+  createdById       String?             @db.Uuid
+  updatedById       String?             @db.Uuid
+
+  status  ProductionStatus?  @relation(fields: [statusId], references: [id])
+  tax     Tax?               @relation(fields: [taxId], references: [id])
+  members ProductionMember[]
+  items   ProductionItem[]
+  orders  PurchaseOrder[]
+
+  @@unique([projectId, sequence])
+  @@index([clientId])
+  @@index([situation, deadline])
+  @@map("production")
+  @@schema("production")
+}
+
+model ProductionMember {
+  productionId String @db.Uuid
+  userId       String @db.Uuid
+
+  production Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+
+  @@id([productionId, userId])
+  @@map("production_member")
+  @@schema("production")
+}
+
+/// Item da cotação; número exibido <projeto>.<sequência da produção>.<sequence>.
+model ProductionItem {
+  id              String              @id @default(uuid(7)) @db.Uuid
+  productionId    String              @db.Uuid
+  sequence        Int
+  title           String
+  description     String?
+  /// Quantidades cotadas (ex.: 500, 1000, 2000), sem repetição.
+  quantities      Decimal[]           @db.Decimal(14, 4)
+  commissionType  ProductionValueType @default(PERCENT)
+  commissionValue Decimal             @default(0) @db.Decimal(14, 4)
+  feeType         ProductionValueType @default(PERCENT)
+  feeValue        Decimal             @default(0) @db.Decimal(14, 4)
+  active          Boolean             @default(true)
+
+  production Production     @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  suppliers  ItemSupplier[]
+
+  @@unique([productionId, sequence])
+  @@map("item")
+  @@schema("production")
+}
+
+/// Fornecedor cotado num item.
+model ItemSupplier {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  itemId         String    @db.Uuid
+  supplierId     String    @db.Uuid
+  estimateNumber String?
+  dueDate        DateTime? @db.Date
+  /// Itens do mesmo fornecedor com o mesmo grupo saem no mesmo pedido.
+  orderGroup     Int       @default(0)
+  active         Boolean   @default(true)
+
+  item   ProductionItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quotes Quote[]
+
+  @@unique([itemId, supplierId])
+  @@map("item_supplier")
+  @@schema("production")
+}
+
+/// Valor cotado por um fornecedor para uma quantidade. Só uma cotação
+/// aprovada por fornecedor em cada item.
+model Quote {
+  id              String  @id @default(uuid(7)) @db.Uuid
+  itemSupplierId  String  @db.Uuid
+  quantity        Decimal @db.Decimal(14, 4)
+  unitValue       Decimal @default(0) @db.Decimal(14, 6)
+  totalValue      Decimal @default(0) @db.Decimal(14, 2)
+  commissionValue Decimal @default(0) @db.Decimal(14, 2)
+  feeValue        Decimal @default(0) @db.Decimal(14, 2)
+  approved        Boolean @default(false)
+
+  itemSupplier ItemSupplier @relation(fields: [itemSupplierId], references: [id], onDelete: Cascade)
+
+  @@unique([itemSupplierId, quantity])
+  @@unique([itemSupplierId], where: { approved: true }, map: "quote_one_approved_key")
+  @@map("quote")
+  @@schema("production")
+}
+
+/// Pedido de produção (PP): um por fornecedor aprovado (e grupo de itens).
+model PurchaseOrder {
+  id                   String                 @id @default(uuid(7)) @db.Uuid
+  productionId         String                 @db.Uuid
+  supplierId           String                 @db.Uuid
+  orderGroup           Int                    @default(0)
+  billingType          ProductionBillingType?
+  subtotal             Decimal                @default(0) @db.Decimal(14, 2)
+  discount             Decimal                @default(0) @db.Decimal(14, 2)
+  total                Decimal                @default(0) @db.Decimal(14, 2)
+  commission           Decimal                @default(0) @db.Decimal(14, 2)
+  negotiatedCommission Decimal?               @db.Decimal(14, 2)
+  fee                  Decimal                @default(0) @db.Decimal(14, 2)
+  tax                  Decimal                @default(0) @db.Decimal(14, 2)
+  netValue             Decimal                @default(0) @db.Decimal(14, 2)
+  valueToPass          Decimal                @default(0) @db.Decimal(14, 2)
+  supplierNotes        String?
+  deliveryPlace        String?
+  deliveryDate         DateTime?              @db.Date
+  firstDueDate         DateTime?              @db.Date
+  approvedById         String?                @db.Uuid
+  approvedAt           DateTime?              @db.Timestamptz(3)
+  /// Preenchido ao enviar ao financeiro; trava os itens deste fornecedor.
+  sentToFinanceAt      DateTime?              @db.Timestamptz(3)
+  snapshot             Json?
+  createdAt            DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime               @updatedAt @db.Timestamptz(3)
+
+  production   Production                 @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  installments PurchaseOrderInstallment[]
+
+  @@unique([productionId, supplierId, orderGroup])
+  @@map("purchase_order")
+  @@schema("production")
+}
+
+model PurchaseOrderInstallment {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  purchaseOrderId String    @db.Uuid
+  number          Int
+  dueDate         DateTime  @db.Date
+  billingDate     DateTime? @db.Date
+  amount          Decimal   @db.Decimal(14, 2)
+  paymentMethodId String?   @db.Uuid
+  financeBillId   String?   @db.Uuid
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@unique([purchaseOrderId, number])
+  @@map("purchase_order_installment")
+  @@schema("production")
+}
+
+model ProductionStatus {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  name         String
+  color        String
+  order        Int     @default(0)
+  active       Boolean @default(true)
+  ignoresDelay Boolean @default(false)
+
+  productions Production[]
+
+  @@map("status")
+  @@schema("production")
+}
+
+/// Encargo aplicado sobre os valores (também usado por Propostas, quando entrar).
+model Tax {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  title     String
+  type      String?
+  percent   Decimal @default(0) @db.Decimal(7, 4)
+  isDefault Boolean @default(false)
+  active    Boolean @default(true)
+
+  productions Production[]
+
+  @@unique([isDefault], where: { isDefault: true }, map: "tax_one_default_key")
+  @@map("tax")
+  @@schema("production")
+}
+
+model PredefinedText {
+  id     String             @id @default(uuid(7)) @db.Uuid
+  kind   PredefinedTextKind
+  title  String
+  html   String
+  active Boolean            @default(true)
+
+  @@map("predefined_text")
+  @@schema("production")
+}
+
+model ProductionHistory {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  entityType String
+  entityId   String   @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([entityType, entityId])
+  @@map("history")
+  @@schema("production")
+}

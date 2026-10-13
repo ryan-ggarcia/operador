@@ -1,0 +1,33 @@
+// Módulo ai: conversas com o Claude, mensagens e consumo de tokens.
+
+model AiConversation {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  title     String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  messages AiMessage[]
+
+  @@index([userId])
+  @@map("conversation")
+  @@schema("ai")
+}
+
+model AiMessage {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  conversationId String   @db.Uuid
+  role           String
+  content        Json
+  toolCalls      Json?
+  model          String?
+  inputTokens    Int?
+  outputTokens   Int?
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("message")
+  @@schema("ai")
+}

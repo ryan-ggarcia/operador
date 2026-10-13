@@ -1,0 +1,22 @@
+// Módulo settings: dados da agência usados nos PDFs.
+
+/// Dados da agência, usados nos PDFs. Uma linha só.
+model Agency {
+  id                    String   @id @default(uuid(7)) @db.Uuid
+  legalName             String
+  tradeName             String
+  cnpj                  String?
+  stateRegistration     String?
+  municipalRegistration String?
+  email                 String?
+  phone                 String?
+  address               Json?
+  logoFileId            String?  @db.Uuid
+  timezone              String   @default("America/Sao_Paulo")
+  currency              String   @default("BRL")
+  locale                String   @default("pt-BR")
+  updatedAt             DateTime @updatedAt @db.Timestamptz(3)
+
+  @@map("agency")
+  @@schema("settings")
+}

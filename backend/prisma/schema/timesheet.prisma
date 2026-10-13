@@ -1,0 +1,96 @@
+// Módulo timesheet: apontamentos de horas e jornadas de trabalho.
+// docId aponta para um documento de outro módulo (job, tarefa, mídia,
+// produção, projeto); projectId e clientId vêm do módulo de origem.
+
+enum TimeEntryDocType {
+  JOB
+  TASK
+  MEDIA
+  PRODUCTION
+  PROJECT
+
+  @@schema("timesheet")
+}
+
+enum TimeEntrySource {
+  TIMER
+  MANUAL
+
+  @@schema("timesheet")
+}
+
+enum TimeEntryKind {
+  NORMAL
+  REWORK
+
+  @@schema("timesheet")
+}
+
+enum TimeEntrySituation {
+  RUNNING
+  DONE
+
+  @@schema("timesheet")
+}
+
+/// Um só apontamento RUNNING por usuário.
+model TimeEntry {
+  id          String             @id @default(uuid(7)) @db.Uuid
+  userId      String             @db.Uuid
+  docType     TimeEntryDocType
+  docId       String             @db.Uuid
+  projectId   String?            @db.Uuid
+  clientId    String?            @db.Uuid
+  startedAt   DateTime           @db.Timestamptz(3)
+  endedAt     DateTime?          @db.Timestamptz(3)
+  minutes     Int                @default(0)
+  source      TimeEntrySource    @default(TIMER)
+  kind        TimeEntryKind      @default(NORMAL)
+  description String?
+  situation   TimeEntrySituation @default(RUNNING)
+  /// Valor/hora do colaborador no dia do apontamento (custo não muda depois).
+  hourlyCost  Decimal?           @db.Decimal(14, 2)
+  createdAt   DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime           @updatedAt @db.Timestamptz(3)
+  updatedById String?            @db.Uuid
+
+  @@unique([userId], where: raw("situation = 'RUNNING'"), map: "time_entry_one_running_key")
+  @@index([userId, startedAt])
+  @@index([docType, docId])
+  @@index([clientId, startedAt])
+  @@index([projectId])
+  @@map("time_entry")
+  @@schema("timesheet")
+}
+
+model WorkSchedule {
+  id                          String   @id @default(uuid(7)) @db.Uuid
+  title                       String
+  isDefault                   Boolean  @default(false)
+  productiveGoalMinutesPerDay Int?
+  /// Dia da semana (0 = domingo) → faixas de entrada e saída.
+  periods                     Json
+  active                      Boolean  @default(true)
+  createdAt                   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt                   DateTime @updatedAt @db.Timestamptz(3)
+
+  users UserSchedule[]
+
+  @@unique([isDefault], where: { isDefault: true }, map: "work_schedule_one_default_key")
+  @@map("work_schedule")
+  @@schema("timesheet")
+}
+
+/// Jornada de cada usuário; trocar vale a partir do dia seguinte (validFrom).
+model UserSchedule {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  userId     String   @db.Uuid
+  scheduleId String   @db.Uuid
+  validFrom  DateTime @db.Date
+
+  schedule WorkSchedule @relation(fields: [scheduleId], references: [id])
+
+  @@unique([userId, validFrom])
+  @@map("user_schedule")
+  @@schema("timesheet")
+}

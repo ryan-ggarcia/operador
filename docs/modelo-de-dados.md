@@ -26,15 +26,20 @@
 | `production` | `production` | Produções, itens, cotações por fornecedor, pedidos de produção, encargos | Produção |
 | `finance` | `finance` | Lançamentos (receitas e despesas), parcelas, contas, categorias, centros de custo, formas de pagamento, transferências | Financeiro |
 | `files` | `files` | Anexos de qualquer módulo (metadados; arquivos no Supabase Storage) | Anexos |
-| `notifications` | `notifications` | Avisos no sistema e por e-mail; preferências por usuário | Notificações |
+| `notifications` | `notifications` | Avisos no sistema e preferências por usuário (o envio por e-mail é um extra, depois da v1) | Notificações |
 | `settings` | `settings` | Dados da agência (razão social, CNPJ, endereço, logo), fuso, moeda | Empresas, Geral |
 | `ai` | `ai` | Conversas com o Claude, mensagens e consumo de tokens | (novo) |
 
 **Fora da v1**: Propostas e contratos de fee, Conversas, Agenda, Acesso
 Cliente, CENP-Meios, webhooks e API pública, boleto e NFS-e, conciliação
-bancária (OFX), Timesheet Automático, grade de TV/rádio com calendário e
-tabelas de preço por programa. As tabelas marcadas "depois" abaixo ficam
-desenhadas, mas não entram na primeira migração.
+bancária (OFX), Timesheet Automático e **envio de e-mails** (extra: notificações
+e redefinição de senha por e-mail). As tabelas marcadas "depois" abaixo
+ficam desenhadas, mas não entram na primeira migração.
+
+A grade de mídia e o faturamento de mídia e produção ficam **iguais ao
+Operand** (decisão do usuário): todos os tipos de mídia, incluindo TV e rádio
+com calendário de inserções, programas e tabelas de preço, e faturas geradas
+no financeiro conforme o tipo de faturamento.
 
 A dashboard e os relatórios não têm schema próprio: leem os dados pelas
 interfaces públicas dos módulos (ver 4).
@@ -65,13 +70,13 @@ interfaces públicas dos módulos (ver 4).
 
 | Tabela | Campos principais | Observações |
 |---|---|---|
-| `user_account` | email (único), passwordHash, name, avatarFileId, signatureFileId, color, accessProfileId, customPermissions (JSON, nulo = usa o perfil), isOwner, collaboratorId (único), active, lastLoginAt | Desativar no lugar de excluir. Precisa de acesso a pelo menos um módulo. |
+| `user_account` | email (único), passwordHash, name, avatarFileId, signatureFileId, color, accessProfileId, customPermissions (JSON, nulo = usa o perfil), isOwner, mustChangePassword, collaboratorId (único), active, lastLoginAt | Desativar no lugar de excluir. Precisa de acesso a pelo menos um módulo. |
 | `access_profile` | name, permissions (JSON: módulo → nível 0/1/2/3/6/7, mais flags), system | Dados iniciais: os 9 perfis do Operand ([configuracoes.md](operand/configuracoes.md#14-usuários-e-permissões-vista--legado)) |
 | `collaborator` | personType (PF/PJ), name, document (CPF/CNPJ, único), legalName, rg, birthDate, phone, email, address (JSON), positionId, admissionDate, dismissalDate, grossSalary, totalCost, **hourlyRate**, benefits (JSON), bankData (JSON), pixKeys (JSON), cvUrl, notes, active | Dados de RH: acesso restrito e **nunca** enviados ao Claude |
 | `position` | name (único) | Funções (CEO, Mídia, Atendimento…) |
 | `team`, `team_member` | name; teamId + userId | |
 | `refresh_token` | userId, tokenHash, expiresAt, revokedAt | Login com JWT curto + refresh |
-| `password_reset` | userId, tokenHash, expiresAt, usedAt | Redefinir senha por e-mail |
+| `password_reset` | userId, tokenHash, expiresAt, usedAt | **Depois** (junto com o e-mail). Na v1, o administrador define uma senha provisória e o usuário troca no primeiro acesso (`mustChangePassword` em `user_account`). |
 | `history` | entityType, entityId, userId, action, field, oldValue, newValue, createdAt | |
 
 **Por que colaborador fica no `auth`**: todo usuário é um colaborador, e o
@@ -143,7 +148,9 @@ produção para quando a agência quiser.
 | `market` | name, abbreviation, state | Praças |
 | `cost_metric` | name (CPM, CPC…), active | |
 | `predefined_briefing` | title, html | |
-| `program`, `price_table`, `price_table_row` | **depois**: programas de TV/rádio e tabelas de preço | |
+| `program` | name, mnemonic (único por rede), networkId, channel, mediaType (tv, radio), airingDays (dias da semana), startTime, endTime, active | Só se insere nos dias em que o programa vai ao ar. Programa usado numa tabela de preços não pode ser excluído. |
+| `price_table` | vehicleId, mediaType, mnemonic, networkId, channel, marketId, validFrom, active | Tabela de preços do veículo por praça e vigência; importação por planilha |
+| `price_table_row` | priceTableId, programId (TV/rádio), section, position, color, format, unitPrice | Jornal e revista usam seção, posição, cor e formato |
 | `history` | (igual) | |
 
 ### 3.6 `production`
@@ -197,7 +204,7 @@ quitada.
 | Tabela | Campos principais | Observações |
 |---|---|---|
 | `notification` | userId, event, title, link, payload (JSON), readAt, createdAt | |
-| `preference` | userId, event, inApp, email | Eventos da v1: fui mencionado, fui envolvido, peça aprovada/reprovada, documento concluído ou reaberto |
+| `preference` | userId, event, inApp, email (usado quando o e-mail entrar) | Eventos da v1: fui mencionado, fui envolvido, peça aprovada/reprovada, documento concluído ou reaberto |
 
 ### 3.10 `settings`
 
@@ -268,12 +275,13 @@ tabelas.
 
 ---
 
-## 7. Pontos para decidir
+## 7. Decisões do usuário (13/10/2026)
 
-1. **Grade de mídia**: a v1 cobre internet, externa e outras (as mais usadas)
-   e TV/rádio sem o calendário dia a dia? Ou TV/rádio já com calendário?
-2. **Faturamento de mídia e produção**: a v1 gera as faturas no financeiro
-   automaticamente ou só calcula os valores (comissão, líquido) para lançar à
-   mão?
-3. **Notificações por e-mail**: qual serviço de envio (ex.: Resend, Amazon
-   SES ou o SMTP do domínio)?
+1. **Grade de mídia igual ao Operand**: todos os tipos, inclusive TV e rádio
+   com calendário de inserções, programas e tabelas de preço.
+2. **Faturamento igual ao Operand**: mídia e produção geram as faturas no
+   financeiro pelo tipo de faturamento; o documento enviado fica travado até
+   reabrir.
+3. **E-mail é um extra**: a v1 só tem avisos no sistema. Envio de e-mail
+   (notificações e redefinição de senha) vem depois.
+4. **Sem CENP**; Financeiro e Produção entram na v1.

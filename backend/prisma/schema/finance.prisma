@@ -1,0 +1,256 @@
+// Módulo finance: lançamentos (receitas e despesas), parcelas, contas,
+// categorias, centros de custo, formas de pagamento e transferências.
+// partyId aponta para crm.party ou, se partyType = COLLABORATOR, para
+// auth.collaborator. sourceId aponta para o documento que gerou a fatura.
+
+enum BillKind {
+  REVENUE
+  EXPENSE
+
+  @@schema("finance")
+}
+
+enum BillPartyType {
+  CLIENT
+  SUPPLIER
+  PROVIDER
+  VEHICLE
+  COLLABORATOR
+
+  @@schema("finance")
+}
+
+enum BillCondition {
+  SINGLE
+  INSTALLMENTS
+  RECURRING
+
+  @@schema("finance")
+}
+
+enum BillSourceType {
+  MANUAL
+  MEDIA
+  PRODUCTION
+  PROJECT
+  JOB
+  TRANSFER
+
+  @@schema("finance")
+}
+
+enum BillSituation {
+  OPEN
+  PAID
+  CANCELED
+
+  @@schema("finance")
+}
+
+enum CategoryKind {
+  REVENUE
+  EXPENSE
+
+  @@schema("finance")
+}
+
+model Bill {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  /// Une as parcelas de um mesmo lançamento.
+  installmentGroupId String?        @db.Uuid
+  kind               BillKind
+  partyType          BillPartyType
+  partyId            String         @db.Uuid
+  title              String
+  categoryId         String         @db.Uuid
+  accountId          String         @db.Uuid
+  paymentMethodId    String         @db.Uuid
+  amount             Decimal        @db.Decimal(14, 2)
+  additions          Decimal        @default(0) @db.Decimal(14, 2)
+  discounts          Decimal        @default(0) @db.Decimal(14, 2)
+  finalAmount        Decimal        @db.Decimal(14, 2)
+  dueDate            DateTime       @db.Date
+  paidAt             DateTime?      @db.Date
+  competenceDate     DateTime?      @db.Date
+  billingDate        DateTime?      @db.Date
+  installmentNumber  Int            @default(1)
+  installmentCount   Int            @default(1)
+  condition          BillCondition  @default(SINGLE)
+  documentNumber     String?
+  referenceNumber    String?
+  clientId           String?        @db.Uuid
+  sourceType         BillSourceType @default(MANUAL)
+  sourceId           String?        @db.Uuid
+  projectId          String?        @db.Uuid
+  statusId           String?        @db.Uuid
+  situation          BillSituation  @default(OPEN)
+  notes              String?
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime       @updatedAt @db.Timestamptz(3)
+  createdById        String?        @db.Uuid
+  updatedById        String?        @db.Uuid
+
+  category      Category         @relation(fields: [categoryId], references: [id])
+  account       Account          @relation(fields: [accountId], references: [id])
+  paymentMethod PaymentMethod    @relation(fields: [paymentMethodId], references: [id])
+  status        FinanceStatus?   @relation(fields: [statusId], references: [id])
+  costCenters   BillCostCenter[]
+  adjustments   BillAdjustment[]
+
+  @@index([kind, situation, dueDate])
+  @@index([sourceType, sourceId])
+  @@index([clientId])
+  @@index([partyType, partyId])
+  @@index([installmentGroupId])
+  @@map("bill")
+  @@schema("finance")
+}
+
+/// Rateio do lançamento entre centros de custo.
+model BillCostCenter {
+  billId       String   @db.Uuid
+  costCenterId String   @db.Uuid
+  amount       Decimal  @db.Decimal(14, 2)
+  percent      Decimal? @db.Decimal(7, 4)
+
+  bill       Bill       @relation(fields: [billId], references: [id], onDelete: Cascade)
+  costCenter CostCenter @relation(fields: [costCenterId], references: [id])
+
+  @@id([billId, costCenterId])
+  @@map("bill_cost_center")
+  @@schema("finance")
+}
+
+model BillAdjustment {
+  id               String  @id @default(uuid(7)) @db.Uuid
+  billId           String  @db.Uuid
+  adjustmentTypeId String  @db.Uuid
+  amount           Decimal @db.Decimal(14, 2)
+
+  bill           Bill           @relation(fields: [billId], references: [id], onDelete: Cascade)
+  adjustmentType AdjustmentType @relation(fields: [adjustmentTypeId], references: [id])
+
+  @@map("bill_adjustment")
+  @@schema("finance")
+}
+
+/// Transferência entre contas: gera o par de lançamentos saída/entrada.
+model Transfer {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  title         String
+  fromAccountId String   @db.Uuid
+  toAccountId   String   @db.Uuid
+  date          DateTime @db.Date
+  amount        Decimal  @db.Decimal(14, 2)
+  outBillId     String?  @unique @db.Uuid
+  inBillId      String?  @unique @db.Uuid
+  scheduled     Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  createdById   String?  @db.Uuid
+
+  fromAccount Account @relation("TransferFrom", fields: [fromAccountId], references: [id])
+  toAccount   Account @relation("TransferTo", fields: [toAccountId], references: [id])
+
+  @@map("transfer")
+  @@schema("finance")
+}
+
+/// Plano de contas em árvore.
+model Category {
+  id       String       @id @default(uuid(7)) @db.Uuid
+  name     String
+  parentId String?      @db.Uuid
+  kind     CategoryKind
+  active   Boolean      @default(true)
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  bills    Bill[]
+
+  @@map("category")
+  @@schema("finance")
+}
+
+model Account {
+  id             String  @id @default(uuid(7)) @db.Uuid
+  name           String
+  bank           String?
+  accountType    String?
+  agency         String?
+  number         String?
+  initialBalance Decimal @default(0) @db.Decimal(14, 2)
+  isDefault      Boolean @default(false)
+  active         Boolean @default(true)
+
+  bills         Bill[]
+  transfersFrom Transfer[] @relation("TransferFrom")
+  transfersTo   Transfer[] @relation("TransferTo")
+
+  @@unique([isDefault], where: { isDefault: true }, map: "account_one_default_key")
+  @@map("account")
+  @@schema("finance")
+}
+
+model PaymentMethod {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  name      String  @unique
+  isDefault Boolean @default(false)
+  active    Boolean @default(true)
+
+  bills Bill[]
+
+  @@map("payment_method")
+  @@schema("finance")
+}
+
+model CostCenter {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  name   String  @unique
+  active Boolean @default(true)
+
+  bills BillCostCenter[]
+
+  @@map("cost_center")
+  @@schema("finance")
+}
+
+/// Tipo de acréscimo (sign = 1) ou desconto (sign = -1).
+model AdjustmentType {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  name   String  @unique
+  sign   Int
+  active Boolean @default(true)
+
+  adjustments BillAdjustment[]
+
+  @@map("adjustment_type")
+  @@schema("finance")
+}
+
+model FinanceStatus {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  name   String  @unique
+  color  String
+  system Boolean @default(false)
+
+  bills Bill[]
+
+  @@map("status")
+  @@schema("finance")
+}
+
+model FinanceHistory {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  entityType String
+  entityId   String   @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([entityType, entityId])
+  @@map("history")
+  @@schema("finance")
+}

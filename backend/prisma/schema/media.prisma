@@ -1,0 +1,362 @@
+// Módulo media: mídias (PI), peças, grades e linhas, redes, programas,
+// tabelas de preço, praças e métricas de custo. Grade e faturamento iguais ao
+// Operand (ver docs/operand/midia.md). Sem CENP.
+// clientId, vehicleId e vehicleContactId são do crm; projectId do projects.
+
+enum MediaType {
+  TV
+  RADIO
+  NEWSPAPER
+  MAGAZINE
+  OOH
+  INTERNET
+  OTHER
+
+  @@schema("media")
+}
+
+enum MediaSituation {
+  OPEN
+  DONE
+  CANCELED
+
+  @@schema("media")
+}
+
+enum ValueType {
+  PERCENT
+  AMOUNT
+
+  @@schema("media")
+}
+
+/// Quem fatura contra quem (ver docs/operand/midia.md, 2.4).
+enum BillingType {
+  FLCC
+  FBCC
+  FLCA
+  FL_CCA
+  FBCA
+
+  @@schema("media")
+}
+
+enum NetworkType {
+  OPEN_TV
+  PAY_TV
+  RADIO
+  OTHER
+
+  @@schema("media")
+}
+
+model Media {
+  id                   String         @id @default(uuid(7)) @db.Uuid
+  projectId            String         @db.Uuid
+  sequence             Int
+  clientId             String         @db.Uuid
+  title                String
+  mediaType            MediaType
+  vehicleId            String?        @db.Uuid
+  vehicleContactId     String?        @db.Uuid
+  networkId            String?        @db.Uuid
+  channel              String?
+  target               String?
+  estimateNumber       String?
+  responsibleId        String?        @db.Uuid
+  requesterId          String?        @db.Uuid
+  statusId             String?        @db.Uuid
+  situation            MediaSituation @default(OPEN)
+  deadline             DateTime?      @db.Timestamptz(3)
+  documentDate         DateTime?      @db.Date
+  commissionType       ValueType      @default(PERCENT)
+  commissionValue      Decimal        @default(0) @db.Decimal(14, 4)
+  negotiatedCommission Decimal?       @db.Decimal(14, 4)
+  feeType              ValueType      @default(PERCENT)
+  feeValue             Decimal        @default(0) @db.Decimal(14, 4)
+  discountType         ValueType      @default(AMOUNT)
+  discountValue        Decimal        @default(0) @db.Decimal(14, 4)
+  /// Totais calculados pelo service e gravados para as pautas.
+  grossTotal           Decimal        @default(0) @db.Decimal(14, 2)
+  bonusTotal           Decimal        @default(0) @db.Decimal(14, 2)
+  netValue             Decimal        @default(0) @db.Decimal(14, 2)
+  billingType          BillingType?
+  firstDueDate         DateTime?      @db.Date
+  paymentCondition     String?
+  vehicleNotes         String?
+  clientNotes          String?
+  briefing             String?
+  pdfPreferences       Json?
+  /// Preenchido ao enviar ao financeiro; enquanto preenchido, a mídia fica travada.
+  sentToFinanceAt      DateTime?      @db.Timestamptz(3)
+  /// Retrato de cliente e veículo no envio, para o PDF não mudar depois.
+  snapshot             Json?
+  closedAt             DateTime?      @db.Timestamptz(3)
+  createdAt            DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime       @updatedAt @db.Timestamptz(3)
+  createdById          String?        @db.Uuid
+  updatedById          String?        @db.Uuid
+
+  network      Network?           @relation(fields: [networkId], references: [id])
+  status       MediaStatus?       @relation(fields: [statusId], references: [id])
+  members      MediaMember[]
+  pieces       MediaPiece[]
+  grids        MediaGrid[]
+  installments MediaInstallment[]
+
+  @@unique([projectId, sequence])
+  @@index([clientId])
+  @@index([vehicleId])
+  @@index([situation, deadline])
+  @@map("media")
+  @@schema("media")
+}
+
+model MediaMember {
+  mediaId String @db.Uuid
+  userId  String @db.Uuid
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, userId])
+  @@map("media_member")
+  @@schema("media")
+}
+
+/// Peça (criativo) identificada por letra: A, B, C…
+model MediaPiece {
+  id      String @id @default(uuid(7)) @db.Uuid
+  mediaId String @db.Uuid
+  letter  String @db.VarChar(3)
+  title   String
+
+  media Media       @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  lines MediaLine[]
+
+  @@unique([mediaId, letter])
+  @@map("media_piece")
+  @@schema("media")
+}
+
+/// Grade: uma praça + um período.
+model MediaGrid {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  mediaId        String    @db.Uuid
+  marketId       String?   @db.Uuid
+  periodStart    DateTime? @db.Date
+  periodEnd      DateTime? @db.Date
+  order          Int       @default(0)
+  /// Grades replicadas para outras mídias compartilham o mesmo grupo.
+  replicaGroupId String?   @db.Uuid
+
+  media  Media       @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  market Market?     @relation(fields: [marketId], references: [id])
+  lines  MediaLine[]
+
+  @@index([mediaId])
+  @@map("media_grid")
+  @@schema("media")
+}
+
+/// Linha da grade. Os campos usados dependem do tipo de mídia.
+model MediaLine {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  gridId          String    @db.Uuid
+  pieceId         String?   @db.Uuid
+  programId       String?   @db.Uuid
+  priceTableRowId String?   @db.Uuid
+  product         String?
+  location        String?
+  section         String?
+  position        String?
+  color           String?
+  format          String?
+  placementType   String?
+  costMetricId    String?   @db.Uuid
+  startDate       DateTime? @db.Date
+  endDate         DateTime? @db.Date
+  /// Bi-semanas de OOH.
+  biweeks         Json?
+  /// TV/rádio: data → número de inserções no dia.
+  dailyInsertions Json?
+  insertions      Int       @default(0)
+  unitValue       Decimal   @default(0) @db.Decimal(14, 2)
+  discountPercent Decimal   @default(0) @db.Decimal(7, 4)
+  subtotal        Decimal   @default(0) @db.Decimal(14, 2)
+  isBonus         Boolean   @default(false)
+  order           Int       @default(0)
+
+  grid       MediaGrid   @relation(fields: [gridId], references: [id], onDelete: Cascade)
+  piece      MediaPiece? @relation(fields: [pieceId], references: [id])
+  program    Program?    @relation(fields: [programId], references: [id])
+  costMetric CostMetric? @relation(fields: [costMetricId], references: [id])
+
+  @@index([gridId])
+  @@map("media_line")
+  @@schema("media")
+}
+
+/// Parcelas planejadas; financeBillId é preenchido ao enviar ao financeiro.
+model MediaInstallment {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  mediaId         String    @db.Uuid
+  number          Int
+  dueDate         DateTime  @db.Date
+  billingDate     DateTime? @db.Date
+  amount          Decimal   @db.Decimal(14, 2)
+  paymentMethodId String?   @db.Uuid
+  financeBillId   String?   @db.Uuid
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, number])
+  @@map("media_installment")
+  @@schema("media")
+}
+
+model MediaStatus {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  name         String
+  color        String
+  order        Int     @default(0)
+  active       Boolean @default(true)
+  ignoresDelay Boolean @default(false)
+
+  medias Media[]
+
+  @@map("status")
+  @@schema("media")
+}
+
+model Network {
+  id       String      @id @default(uuid(7)) @db.Uuid
+  name     String      @db.VarChar(250)
+  mnemonic String      @unique
+  type     NetworkType
+  active   Boolean     @default(true)
+
+  medias      Media[]
+  programs    Program[]
+  priceTables PriceTable[]
+
+  @@map("network")
+  @@schema("media")
+}
+
+/// Programa de TV ou rádio. Só se insere nos dias em que vai ao ar.
+model Program {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  name       String
+  mnemonic   String
+  networkId  String    @db.Uuid
+  channel    String?
+  mediaType  MediaType
+  /// Dias da semana em que vai ao ar (0 = domingo).
+  airingDays Int[]
+  startTime  String?   @db.VarChar(5)
+  endTime    String?   @db.VarChar(5)
+  active     Boolean   @default(true)
+
+  network   Network         @relation(fields: [networkId], references: [id])
+  lines     MediaLine[]
+  priceRows PriceTableRow[]
+
+  @@unique([networkId, mnemonic])
+  @@map("program")
+  @@schema("media")
+}
+
+/// Tabela de preços de um veículo por praça e vigência.
+model PriceTable {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  vehicleId String    @db.Uuid
+  mediaType MediaType
+  mnemonic  String?
+  networkId String?   @db.Uuid
+  channel   String?
+  marketId  String?   @db.Uuid
+  validFrom DateTime  @db.Date
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+
+  network Network?        @relation(fields: [networkId], references: [id])
+  market  Market?         @relation(fields: [marketId], references: [id])
+  rows    PriceTableRow[]
+
+  @@index([vehicleId, validFrom])
+  @@map("price_table")
+  @@schema("media")
+}
+
+/// TV/rádio usam programa e formato; jornal e revista, seção, posição, cor e formato.
+model PriceTableRow {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  priceTableId String  @db.Uuid
+  programId    String? @db.Uuid
+  section      String?
+  position     String?
+  color        String?
+  format       String?
+  unitPrice    Decimal @db.Decimal(14, 2)
+
+  priceTable PriceTable @relation(fields: [priceTableId], references: [id], onDelete: Cascade)
+  program    Program?   @relation(fields: [programId], references: [id])
+
+  @@index([priceTableId])
+  @@map("price_table_row")
+  @@schema("media")
+}
+
+/// Praça: cidade ou região de veiculação.
+model Market {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  name         String
+  abbreviation String?
+  state        String? @db.VarChar(2)
+  active       Boolean @default(true)
+
+  grids       MediaGrid[]
+  priceTables PriceTable[]
+
+  @@map("market")
+  @@schema("media")
+}
+
+/// Tipo de custo da internet: CPM, CPC etc.
+model CostMetric {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  name   String  @unique
+  active Boolean @default(true)
+
+  lines MediaLine[]
+
+  @@map("cost_metric")
+  @@schema("media")
+}
+
+model MediaPredefinedBriefing {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  title  String
+  html   String
+  active Boolean @default(true)
+
+  @@map("predefined_briefing")
+  @@schema("media")
+}
+
+model MediaHistory {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  entityType String
+  entityId   String   @db.Uuid
+  userId     String?  @db.Uuid
+  action     String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([entityType, entityId])
+  @@map("history")
+  @@schema("media")
+}
