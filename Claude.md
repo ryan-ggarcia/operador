@@ -167,8 +167,12 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
    (`docs/operand/producao.md`; sem uso desde meados de 2023) e
    **Configurações gerais** (`docs/operand/configuracoes.md`: perfil,
    notificações, empresas, usuários e perfis de permissão, equipes, módulos,
-   integrações, webhooks, Acesso Cliente e Geral). Faltam: Conversas, Agenda,
-   Dashboard e Relatórios (parte já coberta nos módulos).
+   integrações, webhooks, Acesso Cliente e Geral), **Conversas**
+   (`conversas.md`; 1 conversa de teste na conta), **Agenda** (`agenda.md`;
+   parada desde 2025), **Dashboard** (`dashboard.md`; cards lidos do código)
+   e **Relatórios** (`relatorios.md`; catálogo e recursos comuns).
+   **Mapeamento concluído em 13/10/2026.** Próximo passo: revisar a lista de
+   módulos da v1 com o usuário.
    A conta tem 38 usuários ativos (todas as licenças) e 1 empresa; Acesso
    Cliente, Timesheet Automático, CENP e API estão desligados, e só se aponta
    horas em jobs.
@@ -181,9 +185,9 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
    Propostas e Financeiro quase não são usados. A guarda de escrita
    precisa liberar a renovação do login (`securetoken.googleapis.com` e
    `verifyCustomToken`); sem isso, a sessão cai.
-2. Continuar um módulo por vez em `docs/operand/`, perguntando ao usuário a
-   ordem.
-3. Depois do mapeamento, revisar a lista de módulos e modelar o banco.
+2. ~~Continuar um módulo por vez em `docs/operand/`~~ (concluído).
+3. **Agora:** revisar a lista de módulos da v1 com o usuário e modelar o
+   banco.
 4. Só então criar o esqueleto do código (`frontend/`, `backend/`,
    `docker-compose.yml`).
 5. Ainda não há código do aplicativo. O repositório tem `README.md`,
