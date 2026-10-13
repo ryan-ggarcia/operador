@@ -140,6 +140,12 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
   toda requisição que não seja GET. Para ver formulários e menus de ação, o
   agente lê o JS do front em vez de clicar; o classificador do modo automático
   recusa cliques em "Adicionar", "Duplicar" e similares.
+- **Base local do `rea`:** `C:\Users\Iberika\operand-rea`, fora do repositório
+  (tem código do Operand, que não pode entrar aqui). Contém o front inteiro já
+  baixado (app4 e legado app3), índices (rotas com permissão, modais, endpoints,
+  1.658 textos pt-BR), evidências do `rea` e as ferramentas (Chrome de leitura,
+  guarda de escrita, leitores). Instruções no `README.md` de lá e na skill
+  `.claude/skills/mapear-operand`.
 - **Saída:** um arquivo por módulo em `docs/operand/`, com telas, campos (nome,
   tipo, obrigatoriedade, validações), fluxos, regras de negócio, relações com
   outros módulos e permissões.
@@ -150,16 +156,19 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
   colocar nos documentos dados reais de clientes da agência.
 
 ### Status e próximos passos
-1. Mapeados: **Projetos** (`docs/operand/projetos.md`, 13/10/2026). Próximo
-   sugerido: **Jobs** (pauta, kanban, timeline, tarefas, aprovações), que
-   completa o módulo `projects` do operador.
+1. Mapeados em 13/10/2026: **Projetos** (`docs/operand/projetos.md`) e
+   **Jobs** (`docs/operand/jobs.md`; o kanban não carrega cards com a guarda
+   ativa, e a estrutura veio do código). A guarda de escrita
+   precisa liberar a renovação do login (`securetoken.googleapis.com` e
+   `verifyCustomToken`); sem isso, a sessão cai.
 2. Continuar um módulo por vez em `docs/operand/`, perguntando ao usuário a
    ordem.
 3. Depois do mapeamento, revisar a lista de módulos e modelar o banco.
 4. Só então criar o esqueleto do código (`frontend/`, `backend/`,
    `docker-compose.yml`).
-5. Ainda não há código do aplicativo. O repositório tem só `README.md`,
-   `.gitignore` e este arquivo, nada commitado além do commit inicial.
+5. Ainda não há código do aplicativo. O repositório tem `README.md`,
+   `.gitignore`, este arquivo, `docs/operand/` e a skill
+   `.claude/skills/mapear-operand`.
 
 ---
 
