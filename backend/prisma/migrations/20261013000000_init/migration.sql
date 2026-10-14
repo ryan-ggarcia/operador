@@ -50,6 +50,9 @@ CREATE TYPE "finance"."BillCondition" AS ENUM ('SINGLE', 'INSTALLMENTS', 'RECURR
 CREATE TYPE "finance"."BillSourceType" AS ENUM ('MANUAL', 'MEDIA', 'PRODUCTION', 'PROJECT', 'JOB', 'TRANSFER');
 
 -- CreateEnum
+CREATE TYPE "finance"."BillInvoiceClass" AS ENUM ('AGENCY_RECEIVES_COMMISSION_CLIENT', 'AGENCY_RECEIVES_COMMISSION_THIRD_PARTY', 'AGENCY_RECEIVES_NET_CLIENT', 'AGENCY_RECEIVES_TOTAL_CLIENT', 'AGENCY_PAYS_NET_THIRD_PARTY', 'AGENCY_PAYS_TOTAL_THIRD_PARTY', 'FEE');
+
+-- CreateEnum
 CREATE TYPE "finance"."BillSituation" AS ENUM ('OPEN', 'PAID', 'CANCELED');
 
 -- CreateEnum
@@ -399,6 +402,7 @@ CREATE TABLE "finance"."bill" (
     "clientId" UUID,
     "sourceType" "finance"."BillSourceType" NOT NULL DEFAULT 'MANUAL',
     "sourceId" UUID,
+    "invoiceClass" "finance"."BillInvoiceClass",
     "projectId" UUID,
     "statusId" UUID,
     "situation" "finance"."BillSituation" NOT NULL DEFAULT 'OPEN',

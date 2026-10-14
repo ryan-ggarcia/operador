@@ -189,6 +189,107 @@ cedente em cada uma, e se a comissão negociada se aplica.
   valor final.
 - **Veículos**: pauta.
 
+### 2.8 Cálculos da grade e do faturamento (código, engenharia reversa)
+
+Lido em 14/10/2026 com a skill de engenharia reversa (REA): análise estática
+dos scripts do documento de mídia e do componente de faturamento, que o
+Operand publica com mapa de fonte. Depois, conferido na conta, só por
+leitura: a tabela de tipos de faturamento e o faturamento de 145 mídias e 80
+produções (só proporções e classes de fatura, sem valores nem nomes).
+
+**Linha da grade**
+- Total = quantidade × valor unitário, menos o desconto da linha:
+  - desconto em **%**: aplica o percentual sobre quantidade × unitário;
+  - desconto em **valor**: subtrai o valor (é o desconto da linha inteira);
+  - quantidade ou unitário zerados dão total zero; arredonda em centavos.
+- Com desconto em valor, o unitário mínimo é o desconto dividido pela
+  quantidade, arredondado para cima no centavo (o total não fica negativo).
+- **TV e rádio**: a quantidade é a soma das inserções marcadas no calendário
+  dia a dia. Só os dias em que o programa vai ao ar aceitam inserções; sem
+  programa escolhido, o calendário fica bloqueado.
+- **Externa (OOH)**: a quantidade pode ser em bi-semanas.
+- **Jornal**: pode usar a "tabela de valores" por tipo de dia (domingo,
+  sábado, dias úteis). Para cada tipo de dia: altura × largura × valor ×
+  inserções + acréscimo − desconto. Sem a tabela, vale quantidade × unitário.
+
+**Grade e mídia**
+- Linha **bonificada** não entra no valor: soma à parte, como bonificação.
+- Por grade: total sem desconto (linhas não bonificadas), total de desconto,
+  total de bonificação e total da grade.
+- Mídia: valor total = soma das grades; bonificação total = soma das
+  bonificações das grades (vai para o faturamento como informação).
+
+**Faturamento** (componente comum de mídia, produção e propostas)
+- Cabeçalho: valor total, desconto geral, subtotal, valor líquido, valor
+  parcial (comissão), honorários e valor a repassar. O que cada linha
+  significa depende do tipo de faturamento; a tabela de tipos vem do servidor.
+- Subtotal exibido: com desconto geral em %, total ÷ (1 − %); com desconto em
+  valor, total + desconto. Desconto geral em % só existe em mídia.
+- Classes de fatura que o servidor gera:
+
+| Classe | Quem paga a quem | Entra no financeiro da agência? |
+|---|---|---|
+| Veículo/fornecedor recebe do cliente (líquido ou bruto) | O terceiro fatura direto o cliente | Não: só informação, sem status |
+| Agência recebe comissão do cliente | Cliente → agência | Sim (receita) |
+| Agência recebe comissão do veículo/fornecedor | Terceiro → agência | Sim (receita) |
+| Agência recebe do cliente (líquido ou bruto) | Cliente → agência | Sim (receita) |
+| Agência paga ao veículo/fornecedor (líquido ou bruto) | Agência → terceiro | Sim (despesa) |
+| Honorários | Cliente → agência | Sim (receita) |
+
+- Tipos de faturamento × faturas (tabela de tipos lida na conta):
+
+| Tipo | Faturas geradas | Valor líquido | Valor parcial (comissão) |
+|---|---|---|---|
+| 1 FLCC — líquido contra o cliente | Veículo recebe o **líquido** do cliente + agência recebe a **comissão** do cliente | veículo recebe do cliente | agência recebe do cliente |
+| 2 FBCC — bruto contra o cliente | Veículo recebe o **bruto** do cliente + agência recebe a **comissão do veículo** | — (o total vai ao veículo) | agência recebe do veículo |
+| 3 FLCA — líquido contra a agência | Agência recebe a **comissão** do cliente + agência **paga o líquido** ao veículo | veículo recebe da agência | agência recebe do cliente |
+| 4 FL+CCA — líquido + comissão contra a agência | Agência recebe a **comissão** e o **líquido** do cliente + agência **paga o líquido** ao veículo | agência recebe do cliente e repassa ao veículo | agência recebe do cliente |
+| 5 FBCA — bruto contra a agência | Agência recebe o **bruto** do cliente + agência **paga o bruto** ao veículo + agência recebe a **comissão do veículo** | — | agência recebe do veículo |
+
+  Em todos os tipos, os **honorários** são "agência recebe do cliente". Há
+  ainda dois tipos internos ocultos (agência recebe o líquido do cliente;
+  agência paga o líquido ao terceiro), usados fora da mídia.
+
+- **Contas** (observadas nas amostras):
+  - comissão em **%**: comissão = valor total × %; em **valor**: o próprio
+    valor;
+  - **valor líquido** = valor total − comissão (ex.: comissão de 20% dá
+    líquido de 80% do total);
+  - **valor parcial** (o que a agência fatura de comissão) = comissão, ou a
+    **comissão negociada** quando houver. A comissão negociada não muda o
+    líquido; ela só reduz o que a agência cobra. Na conta, a agência usa
+    comissão padrão de 20% com comissão negociada quase zero em parte das
+    mídias de TV, rádio e externa: o veículo recebe o líquido e a agência
+    não emite fatura de comissão;
+  - faturas de valor zero não são geradas (ex.: comissão 0% em FLCC gera só
+    "veículo recebe do cliente" com o valor total);
+  - o valor total já vem com o desconto aplicado.
+- Regras vistas no código:
+  - **comissão negociada** não vale com FBCC nem FBCA (nesses tipos a comissão
+    vem do veículo); o sistema avisa;
+  - em FL+CCA e FBCA com valor a repassar, a linha vira "agência recebe do
+    cliente e repassa ao veículo/fornecedor"; com encargo, "agência recebe do
+    cliente (sem comissão) e retém o encargo de X%".
+- **Uso na conta**: todas as 145 mídias da amostra usam FLCC (uma com
+  FBCC); honorários nunca usados; desconto em 46 mídias (45 em valor).
+  Só uma mídia foi enviada ao financeiro (FLCC, comissão 20%: veículo recebe
+  o líquido; agência recebe a comissão).
+- **Parcelas** de cada fatura:
+  - condição **única**, **parcelada** ou **especial** (mensal, semanal,
+    quinzenal, trimestral, semestral, anual);
+  - parcelada: divide o valor em partes iguais (centavos) e a diferença do
+    arredondamento vai para uma parcela; a soma tem de bater com o valor;
+  - especial (recorrente): cada parcela repete o valor cheio;
+  - datas a partir do **1º vencimento**, no intervalo da condição;
+  - não aceita parcela negativa nem data inválida.
+
+**PDF do PI** — opções (todas ligadas por padrão): dados da agência, do
+veículo e do cliente; comissão/valor líquido; honorários; desconto padrão
+(só com comissão/líquido); instruções de faturamento; "aos cuidados da
+agência" (só com instruções de faturamento); observações; assinaturas da
+agência, do cliente e do veículo; assinatura digitalizada (só com a
+assinatura da agência).
+
 ---
 
 ## 3. Modelo de dados observado
@@ -302,6 +403,8 @@ programa/formato), praça (nome, sigla, estado), configuração CENP por empresa
 ## 8. Pendências
 
 - Telas de jornal, revista e rádio vistas só pelo código.
-- Preferências do PDF do PI (campos exatos).
-- Fórmula exata de cada tipo de faturamento (quais faturas são geradas).
+- ~~Preferências do PDF do PI~~ (lidas em 2.8).
+- ~~Tabela de tipos de faturamento e conta do líquido e da comissão~~
+  (conferidas em 2.8). Faltam exemplos reais de FLCA, FL+CCA e FBCA em mídia
+  (a conta não usa) e o comportamento do encargo no repasse.
 - Lista de praças e veículos reais (dados de cadastro, não mapeados aqui).

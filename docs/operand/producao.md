@@ -161,6 +161,27 @@ As escolhas ficam salvas como preferência do PDF.
 - **Produção › Faturamento**: receitas, comissão, honorários, fornecedores,
   tipo de faturamento, subtotal, desconto geral, valor bruto e valor líquido.
 
+### 2.9 Cálculos e faturamento (engenharia reversa, 14/10/2026)
+
+Conferido na conta só por leitura (cotação e pedido de 80 produções com
+valor; só proporções e classes de fatura) e no código do componente de
+faturamento, que é o mesmo da mídia (ver
+[midia.md](midia.md#28-cálculos-da-grade-e-do-faturamento-código-engenharia-reversa)).
+
+- **Cotação**: valor total = quantidade × valor unitário (confere em todas as
+  cotações da amostra). Comissão (BV) e honorários do item, em % ou valor,
+  são calculados no servidor sobre o total; na conta, **sempre zero**.
+- **Pedido (PP)**: usa a mesma tabela de tipos de faturamento e as mesmas
+  classes de fatura da mídia, com "fornecedor" no lugar de "veículo". O valor
+  parcial é a comissão (BV) que a agência fatura; o valor líquido é o total
+  menos a comissão. Na tela o rótulo da comissão vira "BV".
+- **Uso na conta**: dos 80 pedidos, 50 em FBCC (fornecedor recebe o bruto do
+  cliente), 29 em FLCC (fornecedor recebe do cliente) e 1 em FLCA (agência
+  paga o fornecedor). Nenhum com encargo, repasse ou honorários, e nenhum
+  enviado ao financeiro.
+- Com comissão zero, só nasce a fatura do fornecedor (FLCC/FBCC) ou a de
+  pagamento ao fornecedor (FLCA); faturas de valor zero não são geradas.
+
 ---
 
 ## 3. Modelo de dados observado
@@ -293,7 +314,7 @@ pagamento, observações ao cliente e ao fornecedor, briefing).
 
 - Pauta e documento vistos só numa produção antiga, com um item e um
   fornecedor. Agrupamento de vários itens no mesmo PP veio do código.
-- Fórmula de honorários e encargos (sobre o total ou embutidos).
-- Significado exato da "avaliação" do fornecedor e do "valor parcial" no
-  faturamento.
-- Quais faturas cada tipo de faturamento gera (mesma pendência de Mídia).
+- Fórmula de honorários e encargos (sobre o total ou embutidos): a conta
+  nunca usou, então não há exemplo real.
+- Significado exato da "avaliação" do fornecedor.
+- ~~Valor parcial e faturas por tipo~~ (ver 2.9).

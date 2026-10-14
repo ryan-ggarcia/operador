@@ -59,7 +59,7 @@ Claude**: analisar jobs, relatórios e os demais dados do sistema.
 | Autenticação | E-mail e senha, com token JWT |
 | Front → back | HTTP/REST |
 | Visual do front | Tailwind CSS + shadcn/ui |
-| Pacotes | npm, um `package.json` no front e outro no back |
+| Pacotes | npm workspaces (pedido do usuário em 13/10/2026): `package.json` próprio no front e no back, mais um na raiz só para juntar os dois; uma única `node_modules`, na raiz. Rodar `npm install` sempre na raiz. |
 | Infra local | Docker Compose sobe o PostgreSQL, o back e o front |
 | IA | Claude API pelo SDK oficial `@anthropic-ai/sdk`, modelo `claude-opus-5-5` |
 | Testes | Escritos desde o início, junto com o código: unitários das regras de negócio com Jest (padrão do Nest) |

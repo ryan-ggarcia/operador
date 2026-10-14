@@ -28,6 +28,12 @@ script/textos do front antigo; **(inferido)** = dedução.
   - **centro de custo** (com **rateio**);
   - vínculo opcional a um cliente e a um **documento** (projeto, job,
     proposta, produção, mídia, contrato de fee).
+- Mídia e produção geram as faturas pela **classe de fatura** do tipo de
+  faturamento (agência recebe comissão do cliente, agência paga o líquido ao
+  veículo etc.). As faturas em que o veículo ou o fornecedor recebe direto do
+  cliente não viram lançamento da agência. Tabela completa e contas em
+  [midia.md](midia.md#28-cálculos-da-grade-e-do-faturamento-código-engenharia-reversa)
+  (engenharia reversa de 14/10/2026).
 - Lançamentos podem ser **parcelados** ou **recorrentes**. As parcelas formam
   um grupo ("parcela X de Y").
 - **Transferência** entre contas gera um par saída/entrada.
@@ -39,6 +45,12 @@ script/textos do front antigo; **(inferido)** = dedução.
 - Os outros módulos **enviam ao financeiro** as faturas que geram (propostas,
   produção, mídia, contratos de fee). Depois disso, o documento de origem
   fica travado.
+- Mídia e produção geram as faturas pela **classe de fatura** do tipo de
+  faturamento (agência recebe comissão do cliente, agência paga o líquido ao
+  veículo etc.). As faturas em que o veículo ou o fornecedor recebe direto do
+  cliente não viram lançamento da agência. Tabela completa e contas em
+  [midia.md](midia.md#28-cálculos-da-grade-e-do-faturamento-código-engenharia-reversa)
+  (engenharia reversa de 14/10/2026).
 
 ---
 
