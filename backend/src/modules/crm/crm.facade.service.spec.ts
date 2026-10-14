@@ -1,4 +1,5 @@
 import { CrmFacadeService } from './crm.facade.service.js';
+import type { ContactRepository } from './repositories/contact.repository.js';
 import type {
   PartyRecord,
   PartyRepository,
@@ -21,10 +22,11 @@ describe('CrmFacadeService', () => {
     party({ id: 'p1', isClient: true, isSupplier: true }),
     party({ id: 'p2', name: 'Veículo Exemplo', isVehicle: true }),
   ];
-  const repository: PartyRepository = {
-    findByIds: async (ids) => records.filter((record) => ids.includes(record.id)),
-  };
-  const facade = new CrmFacadeService(repository);
+  const repository = {
+    findByIds: async (ids: string[]) => records.filter((record) => ids.includes(record.id)),
+  } as unknown as PartyRepository;
+  const contacts = { findByIds: async () => [] } as unknown as ContactRepository;
+  const facade = new CrmFacadeService(repository, contacts);
 
   it('devolve os papéis acumulados da pessoa', async () => {
     const result = await facade.getParty('p1');

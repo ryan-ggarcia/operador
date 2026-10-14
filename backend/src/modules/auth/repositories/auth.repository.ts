@@ -38,6 +38,8 @@ export interface AuthRepository {
   findUsersWithPermissions(ids: string[]): Promise<UserWithPermissions[]>;
   findHourlyRate(userId: string): Promise<number | null>;
   markLogin(userId: string, at: Date): Promise<void>;
+  /** Grava a senha nova, tira a troca obrigatória e revoga os refresh tokens. */
+  updatePassword(userId: string, passwordHash: string): Promise<void>;
   saveRefreshToken(
     userId: string,
     tokenHash: string,

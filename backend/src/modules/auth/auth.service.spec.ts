@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service.js';
@@ -28,6 +28,14 @@ class InMemoryAuthRepository implements AuthRepository {
   }
   async markLogin(userId: string) {
     this.logins.push(userId);
+  }
+  async updatePassword(userId: string, passwordHash: string) {
+    const user = this.users.find((item) => item.id === userId)!;
+    user.passwordHash = passwordHash;
+    user.mustChangePassword = false;
+    for (const token of this.tokens.values()) {
+      if (token.userId === userId) token.revokedAt ??= new Date();
+    }
   }
   async saveRefreshToken(userId: string, tokenHash: string, expiresAt: Date) {
     const id = `t${this.tokens.size + 1}`;
@@ -110,5 +118,21 @@ describe('AuthService', () => {
     const { refreshToken } = await service.login('ana@agencia.com', 'segredo');
     user.active = false;
     await expect(service.refresh(refreshToken)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('troca a senha, encerra as sessões antigas e tira a troca obrigatória', async () => {
+    repository.users.push(makeUser({ mustChangePassword: true }));
+    const old = await service.login('ana@agencia.com', 'segredo');
+    const session = await service.changePassword('u1', 'segredo', 'nova-senha-1');
+    expect(session.user.mustChangePassword).toBe(false);
+    await expect(service.refresh(old.refreshToken)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service.login('ana@agencia.com', 'nova-senha-1')).resolves.toBeDefined();
+  });
+
+  it('recusa senha atual errada, senha curta ou igual à atual', async () => {
+    repository.users.push(makeUser());
+    await expect(service.changePassword('u1', 'errada', 'nova-senha-1')).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.changePassword('u1', 'segredo', 'curta')).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.changePassword('u1', 'segredo', 'segredo')).rejects.toBeInstanceOf(BadRequestException);
   });
 });

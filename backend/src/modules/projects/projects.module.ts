@@ -1,0 +1,56 @@
+import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/public/index.js';
+import { CrmModule } from '../crm/public/index.js';
+import { SettingsModule } from '../settings/public/index.js';
+import { CommentsService } from './comments/comments.service.js';
+import { JobsController, TasksController } from './jobs/jobs.controller.js';
+import { JobsService } from './jobs/jobs.service.js';
+import { NamingService } from './naming.service.js';
+import { ProjectsController } from './projects/projects.controller.js';
+import { ProjectsService } from './projects/projects.service.js';
+import { ProjectsFacadeService } from './projects.facade.service.js';
+import { PROJECTS_FACADE } from './public/projects.facade.js';
+import { JOB_REPOSITORY } from './repositories/job.repository.js';
+import { PrismaJobRepository } from './repositories/prisma-job.repository.js';
+import { PrismaProjectRepository } from './repositories/prisma-project.repository.js';
+import {
+  PrismaCommentRepository,
+  PrismaStatusRepository,
+} from './repositories/prisma-status.repository.js';
+import { PROJECT_REPOSITORY } from './repositories/project.repository.js';
+import {
+  COMMENT_REPOSITORY,
+  STATUS_REPOSITORY,
+} from './repositories/status.repository.js';
+import {
+  BriefingsController,
+  CommentsController,
+  StatusesController,
+} from './statuses/statuses.controller.js';
+import { StatusesService } from './statuses/statuses.service.js';
+
+@Module({
+  imports: [AuthModule, CrmModule, SettingsModule],
+  controllers: [
+    ProjectsController,
+    JobsController,
+    TasksController,
+    StatusesController,
+    BriefingsController,
+    CommentsController,
+  ],
+  providers: [
+    ProjectsService,
+    JobsService,
+    StatusesService,
+    CommentsService,
+    NamingService,
+    { provide: PROJECT_REPOSITORY, useClass: PrismaProjectRepository },
+    { provide: JOB_REPOSITORY, useClass: PrismaJobRepository },
+    { provide: STATUS_REPOSITORY, useClass: PrismaStatusRepository },
+    { provide: COMMENT_REPOSITORY, useClass: PrismaCommentRepository },
+    { provide: PROJECTS_FACADE, useClass: ProjectsFacadeService },
+  ],
+  exports: [PROJECTS_FACADE],
+})
+export class ProjectsModule {}

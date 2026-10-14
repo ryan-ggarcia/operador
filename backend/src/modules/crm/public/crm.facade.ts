@@ -11,8 +11,20 @@ export interface PartySummary {
   active: boolean;
 }
 
+export interface ContactSummary {
+  id: string;
+  partyId: string;
+  name: string;
+  email: string | null;
+  phone1: string | null;
+  active: boolean;
+}
+
 /** Interface pública do módulo crm. */
 export interface CrmFacade {
   getParties(ids: string[]): Promise<PartySummary[]>;
   getParty(id: string): Promise<PartySummary | null>;
+  /** Pessoas ativas com o papel, por nome (seletores). */
+  searchParties(role: PartyRole, term: string, limit?: number): Promise<PartySummary[]>;
+  getContacts(ids: string[]): Promise<ContactSummary[]>;
 }

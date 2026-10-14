@@ -62,7 +62,7 @@ Claude**: analisar jobs, relatórios e os demais dados do sistema.
 | Pacotes | npm workspaces (pedido do usuário em 13/10/2026): `package.json` próprio no front e no back, mais um na raiz só para juntar os dois; uma única `node_modules`, na raiz. Rodar `npm install` sempre na raiz. |
 | Infra local | Docker Compose sobe o PostgreSQL, o back e o front |
 | IA | Claude API pelo SDK oficial `@anthropic-ai/sdk`, modelo `claude-opus-5-5` |
-| Testes | Escritos desde o início, junto com o código: unitários das regras de negócio com Jest (padrão do Nest) |
+| Testes | Escritos desde o início, junto com o código: unitários das regras de negócio com Vitest (padrão do Nest 12), e2e e teste de arquitetura |
 
 ### Módulos (primeira versão)
 Definida com o usuário em 13/10/2026, depois do mapeamento. Tabelas e
@@ -207,11 +207,51 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
 3. Lista de módulos da v1 definida (13/10/2026: sem CENP; Financeiro e
    Produção entram) e modelo de dados aprovado (`docs/modelo-de-dados.md`,
    com as decisões do usuário na seção 7).
-4. Só então criar o esqueleto do código (`frontend/`, `backend/`,
-   `docker-compose.yml`).
-5. Ainda não há código do aplicativo. O repositório tem `README.md`,
-   `.gitignore`, este arquivo, `docs/operand/`, `docs/modelo-de-dados.md` e
-   a skill `.claude/skills/mapear-operand`.
+4. **Código em andamento** (14/10/2026). Feito:
+   - npm workspaces na raiz (uma `node_modules`); `backend/` com Nest 12 (ESM,
+     testes com **Vitest**, padrão do Nest 12; o usuário ainda pode pedir Jest)
+     e `frontend/` com Next 16.4 (App Router, `src/`, Cache Components ligado).
+     O Next 16 muda APIs: antes de mexer no front, ler o guia em
+     `node_modules/next/dist/docs/`.
+   - Prisma 7.10, um arquivo por módulo em `backend/prisma/schema/`, migração
+     inicial `20261013000000_init` (conferida: `migrate diff` contra o schema
+     vazio) e seed idempotente `prisma/seed.ts` (8 perfis do Operand, status de
+     projeto/job/mídia/produção/financeiro, jornada padrão, "Sem encargo",
+     formas de pagamento, categorias, conta principal e o dono da conta via
+     `OWNER_EMAIL`/`OWNER_PASSWORD`). O perfil "Conversa" ficou de fora (só dá
+     acesso a Conversas, fora da v1).
+   - Backend ligado no `app.module.ts`: `auth` (login, refresh rotativo, troca
+     de senha, usuários com senha provisória, perfis, equipes, colaboradores,
+     funções; guard de permissões `@RequireAccess`/`@RequireAdministrator`/
+     `@LoadAccess` em `auth/public`, cache de 30 s; o dono é sempre
+     administrador), `crm` (pessoas com papéis, CPF/CNPJ validado e sem
+     duplicar, contatos, anotações, grupos, departamentos, histórico),
+     `settings` (agência) e `projects` (projetos, jobs, tarefas, status,
+     briefings predefinidos, comentários com menção só de envolvidos,
+     histórico, favoritos, projeto "Geral" bloqueado, projeto oculto,
+     arquivar/cancelar em cascata, `reserveDocumentSequence`, prazo sem hora =
+     fim do dia no fuso da agência).
+   - Teste de arquitetura com dependency-cruiser (`npm run lint:arch`); `npm
+     test` na raiz roda unitários, e2e (sem banco) e arquitetura.
+   - Front: shadcn/ui, camada de serviços em `src/services` (renova o token
+     sozinha), login, troca de senha obrigatória no primeiro acesso, pautas de
+     jobs (minha/geral, filtros, atrasados), job (tarefas, comentários,
+     histórico), projetos, cadastros (ficha e contatos) e configurações
+     (agência e usuários).
+   - Verificado contra um PostgreSQL embutido (PGlite, fora do repositório):
+     migração, seed, roteiro de API completo e navegação no Chrome headless.
+     O PGlite é de conexão única: para testar com ele, usar
+     `DATABASE_POOL_MAX=1`.
+   Falta: `timesheet` (e ligar nele as regras pendentes de `projects`:
+   cronômetro ativo impede concluir job; arquivar o projeto para os cronômetros), `media`,
+   `production`, `finance` (e a regra "não cancelar projeto com faturas"),
+   `files`, `notifications` (menções), `ai`; templates, recorrência,
+   duplicar projeto, aprovação de peças; `docker-compose.yml`, Dockerfiles e
+   deploy. O Docker não está instalado na máquina do usuário.
+5. Engenharia reversa de faturamento (14/10/2026): resultados em
+   `docs/operand/midia.md` (2.8) e `producao.md` (2.9); registro técnico em
+   `C:\Users\Iberika\operand-rea\saida\rea\achados-faturamento.md`. O legado
+   (app3) exige login próprio; a guarda de escrita libera só o login.
 
 ---
 

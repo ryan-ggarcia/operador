@@ -2,6 +2,8 @@ import type { UserPermissions } from '../domain/permissions.js';
 
 export type {
   AccessLevel,
+  BudgetAccess,
+  PermissionFlags,
   PermissionModule,
   UserPermissions,
 } from '../domain/permissions.js';
@@ -18,6 +20,12 @@ export interface UserSummary {
   active: boolean;
 }
 
+export interface TeamSummary {
+  id: string;
+  name: string;
+  userIds: string[];
+}
+
 /**
  * Interface pública do módulo auth: o que os outros módulos podem usar.
  * Dados de RH (salário, banco, PIX) não saem por aqui.
@@ -27,4 +35,6 @@ export interface AuthFacade {
   getPermissions(userId: string): Promise<UserPermissions | null>;
   /** Valor/hora atual do colaborador ligado ao usuário (custo de horas). */
   getHourlyRate(userId: string): Promise<number | null>;
+  /** Equipes ativas com os seus membros (filtros de pautas e relatórios). */
+  getTeams(): Promise<TeamSummary[]>;
 }

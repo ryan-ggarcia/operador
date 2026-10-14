@@ -1,10 +1,23 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './modules/auth/public/index.js';
+import { CrmModule } from './modules/crm/public/index.js';
+import { ProjectsModule } from './modules/projects/public/index.js';
+import { SettingsModule } from './modules/settings/public/index.js';
+import { SharedAuthModule } from './shared/auth/shared-auth.module.js';
+import { HealthController } from './shared/health/health.controller.js';
+import { PrismaModule } from './shared/prisma/prisma.module.js';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    SharedAuthModule,
+    AuthModule,
+    CrmModule,
+    SettingsModule,
+    ProjectsModule,
+  ],
+  controllers: [HealthController],
 })
 export class AppModule {}

@@ -13,6 +13,7 @@ import { CurrentUser } from '../../shared/auth/current-user.decorator.js';
 import { Public } from '../../shared/auth/public.decorator.js';
 import { AuthService, type SessionTokens } from './auth.service.js';
 import { LoginDto, RefreshTokenDto } from './dto/auth.dto.js';
+import { ChangePasswordDto } from './dto/users.dto.js';
 import {
   AUTH_FACADE,
   type AuthFacade,
@@ -48,13 +49,31 @@ export class AuthController {
     return this.auth.logout(body.refreshToken);
   }
 
-  @Get('me')
-  async me(
+  /** Troca a própria senha (obrigatório no primeiro acesso). */
+  @Post('password')
+  @HttpCode(HttpStatus.OK)
+  changePassword(
     @CurrentUser() current: AuthUser,
-  ): Promise<{ user: UserSummary; permissions: UserPermissions }> {
-    const [user] = await this.users.getUsers([current.id]);
-    const permissions = await this.users.getPermissions(current.id);
-    if (!user || !permissions) throw new NotFoundException();
-    return { user, permissions };
+    @Body() body: ChangePasswordDto,
+  ): Promise<SessionTokens> {
+    return this.auth.changePassword(
+      current.id,
+      body.currentPassword,
+      body.newPassword,
+    );
+  }
+
+  @Get('me')
+  async me(@CurrentUser() current: AuthUser): Promise<{
+    user: UserSummary & { mustChangePassword: boolean; isOwner: boolean };
+    permissions: UserPermissions;
+  }> {
+    const [[user], permissions, account] = await Promise.all([
+      this.users.getUsers([current.id]),
+      this.users.getPermissions(current.id),
+      this.auth.getAccountFlags(current.id),
+    ]);
+    if (!user || !permissions || !account) throw new NotFoundException();
+    return { user: { ...user, ...account }, permissions };
   }
 }

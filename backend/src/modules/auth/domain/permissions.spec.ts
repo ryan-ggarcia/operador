@@ -1,6 +1,7 @@
 import {
   hasAnyModuleAccess,
   hasLevel,
+  normalizeStoredPermissions,
   resolvePermissions,
 } from './permissions.js';
 
@@ -34,10 +35,32 @@ describe('resolvePermissions', () => {
     expect(permissions.modules.clients).toBe(0);
   });
 
+  it('o dono da conta é sempre administrador', () => {
+    expect(resolvePermissions(profile, null, true).flags.administrator).toBe(true);
+    expect(resolvePermissions(profile, null).flags.administrator).toBe(false);
+  });
+
   it('sem perfil nem personalização, nenhum acesso', () => {
     const permissions = resolvePermissions(null, null);
     expect(hasAnyModuleAccess(permissions)).toBe(false);
     expect(permissions.flags.hiddenProjects).toBe(false);
+  });
+});
+
+describe('normalizeStoredPermissions', () => {
+  it('descarta módulos e níveis desconhecidos e flags com tipo errado', () => {
+    const result = normalizeStoredPermissions({
+      modules: { jobs: 6, projects: 4, inventado: 7, clients: 0 },
+      flags: { hiddenProjects: 'sim', administrator: true, projectBudget: 'edit' },
+    });
+    expect(result).toEqual({
+      modules: { jobs: 6 },
+      flags: { administrator: true, projectBudget: 'edit' },
+    });
+  });
+
+  it('aceita vazio', () => {
+    expect(normalizeStoredPermissions(null)).toEqual({ modules: {}, flags: {} });
   });
 });
 

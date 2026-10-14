@@ -16,6 +16,8 @@ export class PrismaService
     super({
       adapter: new PrismaPg({
         connectionString: config.getOrThrow<string>('DATABASE_URL'),
+        // Limite de conexões do pool (ex.: pooler do Supabase); padrão do pg: 10.
+        max: Number(config.get('DATABASE_POOL_MAX', 10)),
       }),
     });
   }

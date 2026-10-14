@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   UnauthorizedException,
@@ -29,6 +30,7 @@ export interface SessionTokens {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const MIN_PASSWORD_LENGTH = 8;
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -82,6 +84,47 @@ export class AuthService {
     if (stored && !stored.revokedAt) {
       await this.repository.revokeRefreshToken(stored.id, new Date());
     }
+  }
+
+  /**
+   * Troca a senha do próprio usuário (inclusive a provisória do primeiro
+   * acesso). Encerra as outras sessões e devolve uma nova.
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<SessionTokens> {
+    const user = await this.repository.findCredentialsById(userId);
+    if (!user || !user.active) throw new UnauthorizedException();
+    if (!(await this.hasher.verify(currentPassword, user.passwordHash))) {
+      throw new BadRequestException('A senha atual não confere.');
+    }
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      throw new BadRequestException(
+        `A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+      );
+    }
+    if (newPassword === currentPassword) {
+      throw new BadRequestException('A nova senha precisa ser diferente da atual.');
+    }
+    await this.repository.updatePassword(
+      userId,
+      await this.hasher.hash(newPassword),
+    );
+    return this.issueSession({ ...user, mustChangePassword: false });
+  }
+
+  /** Troca de senha pendente e dono da conta, para a tela saber o que mostrar. */
+  async getAccountFlags(
+    userId: string,
+  ): Promise<{ mustChangePassword: boolean; isOwner: boolean } | null> {
+    const [credentials, [user]] = await Promise.all([
+      this.repository.findCredentialsById(userId),
+      this.repository.findUsersWithPermissions([userId]),
+    ]);
+    if (!credentials || !user) return null;
+    return { mustChangePassword: credentials.mustChangePassword, isOwner: user.isOwner };
   }
 
   private async issueSession(user: UserCredentials): Promise<SessionTokens> {
