@@ -252,7 +252,21 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      projeto para os cronômetros dele. Assim `projects` não depende de
      `timesheet` (sem ciclo entre módulos). No front: cronômetro no topo,
      aba Timesheet do job e pauta `/timesheet`.
-   Falta: `media`,
+   - `media` (14/10/2026): mídias (PI) de todos os tipos, peças com letra,
+     grades (praça + período, duplicar), linhas por tipo (TV/rádio com
+     calendário de inserções só nos dias em que o programa vai ao ar; externa
+     com bi-semanas), desconto da linha em % ou valor (migração
+     `20261014120000_media_line_discount`), bonificação fora do valor,
+     desconto geral, comissão padrão de 20%, comissão negociada, honorários,
+     valor líquido e prévia das faturas por tipo de faturamento (FLCC, FBCC,
+     FLCA, FL+CCA, FBCA; contas em centavos em `media/domain/media-math.ts`).
+     Trocar o veículo (ou o canal, na TV) pede confirmação e apaga as grades.
+     Número dividido com jobs; arquivar/cancelar o projeto fecha as mídias.
+     Redes, praças, programas, métricas de custo e status. Front: pauta
+     `/midia`, documento `/midia/:id` e `/midia/configuracoes`.
+     Pendente na mídia: envio ao financeiro (depende do `finance`), PDF do PI,
+     tabelas de preço de TV/rádio, regra de projeto oculto nas mídias.
+   Falta:
    `production`, `finance` (e a regra "não cancelar projeto com faturas"),
    `files`, `notifications` (menções), `ai`; templates, recorrência,
    duplicar projeto, aprovação de peças; `docker-compose.yml`, Dockerfiles e

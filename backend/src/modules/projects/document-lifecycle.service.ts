@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type {
   ClosingDocuments,
   DocumentLifecycleListener,
+  ProjectClosing,
 } from './public/lifecycle.js';
 
 /** Registro dos ouvintes do ciclo de vida (ver public/lifecycle.ts). */
@@ -17,9 +18,9 @@ export class DocumentLifecycleService {
     for (const listener of this.listeners) await listener.beforeClose?.(documents);
   }
 
-  async afterProjectClosed(projectId: string, actorId: string): Promise<void> {
+  async afterProjectClosed(projectId: string, actorId: string, outcome: ProjectClosing): Promise<void> {
     for (const listener of this.listeners) {
-      await listener.afterProjectClosed?.(projectId, actorId);
+      await listener.afterProjectClosed?.(projectId, actorId, outcome);
     }
   }
 }

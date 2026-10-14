@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/public/index.js';
 import { CrmModule } from './modules/crm/public/index.js';
+import { MediaModule } from './modules/media/public/index.js';
 import { ProjectsModule } from './modules/projects/public/index.js';
 import { SettingsModule } from './modules/settings/public/index.js';
 import { TimesheetModule } from './modules/timesheet/public/index.js';
@@ -19,6 +20,7 @@ import { PrismaModule } from './shared/prisma/prisma.module.js';
     SettingsModule,
     ProjectsModule,
     TimesheetModule,
+    MediaModule,
   ],
   controllers: [HealthController],
 })

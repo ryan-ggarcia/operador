@@ -9,12 +9,17 @@ export interface ClosingDocuments {
   taskIds: string[];
 }
 
+export type ProjectClosing = 'archived' | 'canceled';
+
 export interface DocumentLifecycleListener {
   /**
    * Antes de concluir ou cancelar jobs ou tarefas diretamente. Lança um erro
    * HTTP (ex.: BadRequestException) para impedir.
    */
   beforeClose?(documents: ClosingDocuments): Promise<void>;
-  /** Depois que o projeto foi arquivado ou cancelado (com todos os documentos). */
-  afterProjectClosed?(projectId: string, actorId: string): Promise<void>;
+  /**
+   * Depois que o projeto foi arquivado (documentos concluídos) ou cancelado
+   * (documentos cancelados). Cada módulo fecha os seus documentos do projeto.
+   */
+  afterProjectClosed?(projectId: string, actorId: string, outcome: ProjectClosing): Promise<void>;
 }

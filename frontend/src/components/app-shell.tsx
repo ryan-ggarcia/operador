@@ -6,6 +6,7 @@ import {
   KeyRound,
   ListTodo,
   LogOut,
+  Megaphone,
   Timer,
   Menu,
   Settings,
@@ -48,6 +49,7 @@ const NAV: NavItem[] = [
     icon: FolderKanban,
     modules: ['projects'],
   },
+  { href: '/midia', label: 'Mídia', icon: Megaphone, modules: ['medias'] },
   {
     href: '/timesheet',
     label: 'Timesheet',

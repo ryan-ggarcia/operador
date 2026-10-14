@@ -263,7 +263,9 @@ export class ProjectsService {
     const cascade = action === 'reopen' && reopenDocuments ? 'reopen' : CASCADE[action];
     await this.projects.changeSituation(id, next, cascade, userId);
     // Ex.: o timesheet para os cronômetros ativos nos documentos do projeto.
-    if (next !== 'OPEN') await this.lifecycle.afterProjectClosed(id, userId);
+    if (next !== 'OPEN') {
+      await this.lifecycle.afterProjectClosed(id, userId, next === 'ARCHIVED' ? 'archived' : 'canceled');
+    }
     return this.get(userId, access, id);
   }
 

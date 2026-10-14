@@ -58,7 +58,7 @@ export function UserList({ users }: { users: UserRef[] }) {
   );
 }
 
-export function StatusBadge({ status }: { status: Status | undefined | null }) {
+export function StatusBadge({ status }: { status: Pick<Status, 'name' | 'color'> | undefined | null }) {
   if (!status) return <span className="text-xs text-muted-foreground">Sem status</span>;
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium">

@@ -2,6 +2,7 @@
 // front): os componentes usam `api.<área>` e nunca chamam fetch direto.
 import { AuthService, UsersService } from './auth.service';
 import { HttpClient, LocalTokenStore } from './http';
+import { MediaService } from './media.service';
 import { PartiesService, SettingsService } from './parties.service';
 import {
   CommentsService,
@@ -28,4 +29,5 @@ export const api = {
   parties: new PartiesService(http),
   settings: new SettingsService(http),
   timesheet: new TimesheetService(http),
+  media: new MediaService(http),
 };
