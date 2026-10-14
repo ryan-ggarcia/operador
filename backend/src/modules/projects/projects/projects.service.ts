@@ -23,6 +23,7 @@ import {
   type ProjectAction,
   type ProjectSituation,
 } from '../domain/project-rules.js';
+import { DocumentLifecycleService } from '../document-lifecycle.service.js';
 import { NamingService, type NamedRef, type UserRef } from '../naming.service.js';
 import {
   PROJECT_REPOSITORY,
@@ -108,6 +109,7 @@ export class ProjectsService {
     @Inject(PROJECT_REPOSITORY) private readonly projects: ProjectRepository,
     @Inject(STATUS_REPOSITORY) private readonly statuses: StatusRepository,
     private readonly naming: NamingService,
+    private readonly lifecycle: DocumentLifecycleService,
   ) {}
 
   async list(userId: string, access: UserPermissions, query: ProjectListQuery): Promise<Page<ProjectView>> {
@@ -258,9 +260,10 @@ export class ProjectsService {
     const next = nextProjectSituation(project.situation, action);
     if (!next) throw new BadRequestException('O projeto já está nesta situação.');
     // TODO(finance): não cancelar projeto com faturas (projetos.md, regra 6).
-    // TODO(timesheet): arquivar para os cronômetros ativos no projeto.
     const cascade = action === 'reopen' && reopenDocuments ? 'reopen' : CASCADE[action];
     await this.projects.changeSituation(id, next, cascade, userId);
+    // Ex.: o timesheet para os cronômetros ativos nos documentos do projeto.
+    if (next !== 'OPEN') await this.lifecycle.afterProjectClosed(id, userId);
     return this.get(userId, access, id);
   }
 

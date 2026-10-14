@@ -18,6 +18,8 @@ import {
 } from '@/components/common';
 import { StatusSelect, UserSelect } from '@/components/pickers';
 import { useReferenceData } from '@/components/reference-data';
+import { DocumentTimesheet } from '@/components/timesheet/document-timesheet';
+import { StartTimerButton } from '@/components/timesheet/timer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -107,7 +109,13 @@ function EditJob({ job, onSaved, onCancel }: { job: JobDetail; onSaved: () => vo
           <Label>Prazo</Label>
           <div className="flex gap-2">
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            <Input type="time" className="w-32" value={time} disabled={!date} onChange={(e) => setTime(e.target.value)} />
+            <Input
+              type="time"
+              className="w-32"
+              value={time}
+              disabled={!date}
+              onChange={(e) => setTime(e.target.value)}
+            />
           </div>
         </div>
         <div className="grid gap-2">
@@ -188,7 +196,12 @@ function Tasks({ job, onChange }: { job: JobDetail; onChange: () => void }) {
       </ul>
       {job.can.edit && (
         <form onSubmit={add} className="flex flex-wrap gap-2">
-          <Input className="min-w-48 flex-1" placeholder="Nova tarefa" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input
+            className="min-w-48 flex-1"
+            placeholder="Nova tarefa"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
           <div className="w-48">
             <UserSelect users={users} value={responsibleId} onChange={setResponsibleId} placeholder="Sem responsável" />
           </div>
@@ -263,29 +276,34 @@ export default function JobPage() {
           </>
         }
         actions={
-          data.can.act && (
-            <>
-              {data.can.edit && !editing && (
-                <Button variant="outline" onClick={() => setEditing(true)}>
-                  <Pencil /> Editar
-                </Button>
-              )}
-              {data.situation === 'OPEN' ? (
-                <>
-                  <Button variant="outline" disabled={acting} onClick={() => void act('cancel')}>
-                    Cancelar job
+          <>
+            {data.situation === 'OPEN' && data.project.situation === 'OPEN' && (
+              <StartTimerButton docType="job" docId={data.id} />
+            )}
+            {data.can.act && (
+              <>
+                {data.can.edit && !editing && (
+                  <Button variant="outline" onClick={() => setEditing(true)}>
+                    <Pencil /> Editar
                   </Button>
-                  <Button disabled={acting} onClick={() => void act('complete')}>
-                    <CheckCircle2 /> Concluir
+                )}
+                {data.situation === 'OPEN' ? (
+                  <>
+                    <Button variant="outline" disabled={acting} onClick={() => void act('cancel')}>
+                      Cancelar job
+                    </Button>
+                    <Button disabled={acting} onClick={() => void act('complete')}>
+                      <CheckCircle2 /> Concluir
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" disabled={acting} onClick={() => void act('reopen')}>
+                    <RotateCcw /> Reabrir
                   </Button>
-                </>
-              ) : (
-                <Button variant="outline" disabled={acting} onClick={() => void act('reopen')}>
-                  <RotateCcw /> Reabrir
-                </Button>
-              )}
-            </>
-          )
+                )}
+              </>
+            )}
+          </>
         }
       />
 
@@ -314,11 +332,15 @@ export default function JobPage() {
           <Tabs defaultValue="tasks">
             <TabsList>
               <TabsTrigger value="tasks">Tarefas ({data.totalTasks})</TabsTrigger>
+              <TabsTrigger value="timesheet">Timesheet</TabsTrigger>
               <TabsTrigger value="comments">Comentários</TabsTrigger>
               <TabsTrigger value="history">Histórico</TabsTrigger>
             </TabsList>
             <TabsContent value="tasks" className="pt-3">
               <Tasks job={data} onChange={() => void job.reload()} />
+            </TabsContent>
+            <TabsContent value="timesheet" className="pt-3">
+              <DocumentTimesheet docType="job" docId={data.id} tasks={data.tasks} />
             </TabsContent>
             <TabsContent value="comments" className="pt-3">
               <Comments docType="JOB" docId={data.id} />

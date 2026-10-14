@@ -3,6 +3,7 @@ import { AuthModule } from '../auth/public/index.js';
 import { CrmModule } from '../crm/public/index.js';
 import { SettingsModule } from '../settings/public/index.js';
 import { CommentsService } from './comments/comments.service.js';
+import { DocumentLifecycleService } from './document-lifecycle.service.js';
 import { JobsController, TasksController } from './jobs/jobs.controller.js';
 import { JobsService } from './jobs/jobs.service.js';
 import { NamingService } from './naming.service.js';
@@ -45,6 +46,7 @@ import { StatusesService } from './statuses/statuses.service.js';
     StatusesService,
     CommentsService,
     NamingService,
+    DocumentLifecycleService,
     { provide: PROJECT_REPOSITORY, useClass: PrismaProjectRepository },
     { provide: JOB_REPOSITORY, useClass: PrismaJobRepository },
     { provide: STATUS_REPOSITORY, useClass: PrismaStatusRepository },

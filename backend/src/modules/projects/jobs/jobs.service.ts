@@ -30,6 +30,7 @@ import {
   type JobSituation,
 } from '../domain/job-rules.js';
 import { canViewProject } from '../domain/project-rules.js';
+import { DocumentLifecycleService } from '../document-lifecycle.service.js';
 import { NamingService, type NamedRef, type ResolvedNames, type UserRef } from '../naming.service.js';
 import {
   JOB_REPOSITORY,
@@ -160,6 +161,7 @@ export class JobsService {
     @Inject(STATUS_REPOSITORY) private readonly statuses: StatusRepository,
     @Inject(SETTINGS_FACADE) private readonly settings: SettingsFacade,
     private readonly naming: NamingService,
+    private readonly lifecycle: DocumentLifecycleService,
   ) {}
 
   async list(userId: string, access: UserPermissions, query: JobListQuery): Promise<Page<JobView>> {
@@ -294,7 +296,11 @@ export class JobsService {
     if (next === 'OPEN' && job.projectSituation !== 'OPEN') {
       throw new BadRequestException('Reabra o projeto antes de reabrir o job.');
     }
-    // TODO(timesheet): não concluir nem cancelar com cronômetro ativo (jobs.md, regra 4).
+    if (next !== 'OPEN') {
+      // Ex.: o timesheet barra se houver cronômetro ativo no job ou nas tarefas.
+      const tasks = await this.jobs.listTasks(id);
+      await this.lifecycle.beforeClose({ jobIds: [id], taskIds: tasks.map((task) => task.id) });
+    }
     await this.jobs.changeSituation(id, next, userId);
     return this.get(userId, access, id);
   }
@@ -375,6 +381,7 @@ export class JobsService {
     if (job.situation !== 'OPEN') throw new BadRequestException('Reabra o job antes de mexer nas tarefas.');
     const next = nextJobSituation(task.situation, action);
     if (!next) throw new BadRequestException('A tarefa já está nesta situação.');
+    if (next !== 'OPEN') await this.lifecycle.beforeClose({ jobIds: [], taskIds: [taskId] });
     return this.jobs.changeTaskSituation(taskId, next, userId);
   }
 

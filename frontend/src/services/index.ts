@@ -9,6 +9,7 @@ import {
   ProjectsService,
   StatusesService,
 } from './projects.service';
+import { TimesheetService } from './timesheet.service';
 
 export { ApiError } from './http';
 
@@ -26,4 +27,5 @@ export const api = {
   statuses: new StatusesService(http),
   parties: new PartiesService(http),
   settings: new SettingsService(http),
+  timesheet: new TimesheetService(http),
 };

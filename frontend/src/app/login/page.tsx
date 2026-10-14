@@ -29,9 +29,7 @@ export default function LoginPage() {
       router.replace(session.user.mustChangePassword ? '/trocar-senha' : '/jobs');
     } catch (caught) {
       setError(
-        caught instanceof ApiError && caught.status === 401
-          ? 'E-mail ou senha incorretos.'
-          : (caught as Error).message,
+        caught instanceof ApiError && caught.status === 401 ? 'E-mail ou senha incorretos.' : (caught as Error).message,
       );
     } finally {
       setSubmitting(false);

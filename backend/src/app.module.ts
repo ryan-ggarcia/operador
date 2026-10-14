@@ -4,6 +4,7 @@ import { AuthModule } from './modules/auth/public/index.js';
 import { CrmModule } from './modules/crm/public/index.js';
 import { ProjectsModule } from './modules/projects/public/index.js';
 import { SettingsModule } from './modules/settings/public/index.js';
+import { TimesheetModule } from './modules/timesheet/public/index.js';
 import { SharedAuthModule } from './shared/auth/shared-auth.module.js';
 import { HealthController } from './shared/health/health.controller.js';
 import { PrismaModule } from './shared/prisma/prisma.module.js';
@@ -17,6 +18,7 @@ import { PrismaModule } from './shared/prisma/prisma.module.js';
     CrmModule,
     SettingsModule,
     ProjectsModule,
+    TimesheetModule,
   ],
   controllers: [HealthController],
 })

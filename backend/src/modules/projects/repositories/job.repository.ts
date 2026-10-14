@@ -135,6 +135,8 @@ export interface JobRepository {
 
   listTasks(jobId: string): Promise<TaskRecord[]>;
   findTask(id: string): Promise<TaskRecord | null>;
+  /** Ids das tarefas de cada job. */
+  findTaskIdsByJobs(jobIds: string[]): Promise<{ jobId: string; id: string }[]>;
   createTask(jobId: string, data: TaskData, actorId: string): Promise<TaskRecord>;
   updateTask(id: string, data: Partial<TaskData> & { order?: number }, actorId: string): Promise<TaskRecord>;
   changeTaskSituation(id: string, situation: JobSituation, actorId: string): Promise<TaskRecord>;

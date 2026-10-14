@@ -242,8 +242,17 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      migração, seed, roteiro de API completo e navegação no Chrome headless.
      O PGlite é de conexão única: para testar com ele, usar
      `DATABASE_POOL_MAX=1`.
-   Falta: `timesheet` (e ligar nele as regras pendentes de `projects`:
-   cronômetro ativo impede concluir job; arquivar o projeto para os cronômetros), `media`,
+   - `timesheet` (14/10/2026): cronômetro (um por usuário, índice único
+     parcial), apontamento manual (sem data futura; editar tempo ou data vira
+     manual), retrabalho, custo pelo valor/hora do dia, estimado × realizado
+     do job (soma as tarefas), pauta de horas, jornadas (troca vale a partir de
+     amanhã). Ligado a `projects` por ganchos de ciclo de vida
+     (`registerLifecycleListener` na fachada de `projects`): job ou tarefa com
+     cronômetro ativo não conclui nem cancela, e arquivar ou cancelar o
+     projeto para os cronômetros dele. Assim `projects` não depende de
+     `timesheet` (sem ciclo entre módulos). No front: cronômetro no topo,
+     aba Timesheet do job e pauta `/timesheet`.
+   Falta: `media`,
    `production`, `finance` (e a regra "não cancelar projeto com faturas"),
    `files`, `notifications` (menções), `ai`; templates, recorrência,
    duplicar projeto, aprovação de peças; `docker-compose.yml`, Dockerfiles e

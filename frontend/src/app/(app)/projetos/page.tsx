@@ -19,23 +19,10 @@ import { PartyPicker } from '@/components/pickers';
 import { useReferenceData } from '@/components/reference-data';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -104,7 +91,13 @@ function NewProjectDialog({ onCreated }: { onCreated: () => void }) {
         <form onSubmit={save} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="project-title">Título</Label>
-            <Input id="project-title" required maxLength={250} value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input
+              id="project-title"
+              required
+              maxLength={250}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </div>
           <div className="grid gap-2">
             <Label>Cliente</Label>
@@ -112,7 +105,12 @@ function NewProjectDialog({ onCreated }: { onCreated: () => void }) {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="project-description">Descrição (briefing)</Label>
-            <Textarea id="project-description" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Textarea
+              id="project-description"
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
           {permissions?.flags.hiddenProjects && (
             <Label className="flex items-center gap-2 font-normal">
@@ -140,7 +138,8 @@ export default function ProjectsPage() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   const projects = useResource(
-    () => api.projects.list({ search: query || undefined, situations: SITUATIONS[situation], favoritesOnly, limit: 100 }),
+    () =>
+      api.projects.list({ search: query || undefined, situations: SITUATIONS[situation], favoritesOnly, limit: 100 }),
     [query, situation, favoritesOnly],
   );
 
@@ -179,7 +178,8 @@ export default function ProjectsPage() {
           </SelectContent>
         </Select>
         <Label className="flex items-center gap-2 text-sm font-normal">
-          <Checkbox checked={favoritesOnly} onCheckedChange={(value) => setFavoritesOnly(value === true)} /> Só favoritos
+          <Checkbox checked={favoritesOnly} onCheckedChange={(value) => setFavoritesOnly(value === true)} /> Só
+          favoritos
         </Label>
       </div>
 

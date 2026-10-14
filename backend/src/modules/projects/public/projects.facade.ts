@@ -1,5 +1,7 @@
+import type { UserPermissions } from '../../auth/public/index.js';
 import type { JobSituation } from '../domain/job-rules.js';
 import type { ProjectSituation } from '../domain/project-rules.js';
+import type { DocumentLifecycleListener } from './lifecycle.js';
 
 export type { JobSituation } from '../domain/job-rules.js';
 export type { ProjectSituation } from '../domain/project-rules.js';
@@ -32,17 +34,24 @@ export interface JobSummary {
   estimatedMinutes: number | null;
 }
 
-export type ProjectDocumentType = 'project' | 'job';
+export type ProjectDocumentType = 'project' | 'job' | 'task';
 
 /** Referência a um documento do módulo (para timesheet, arquivos, IA). */
 export interface DocumentRef {
   docType: ProjectDocumentType;
   id: string;
   projectId: string;
+  /** Job da tarefa (ou o próprio job); nulo para projeto. */
+  jobId: string | null;
   clientId: string;
+  /** Número exibido (a tarefa usa o número do job). */
   number: string;
   title: string;
+  /** Título do job, quando o documento é uma tarefa. */
+  parentTitle: string | null;
   situation: ProjectSituation | JobSituation;
+  /** Aceita trabalho: o documento e os de cima (job, projeto) estão abertos. */
+  open: boolean;
   /** Envolvidos (responsável, solicitante e membros). */
   involvedUserIds: string[];
 }
@@ -60,6 +69,17 @@ export interface ProjectsFacade {
   getProjects(ids: string[]): Promise<ProjectSummary[]>;
   getJobs(ids: string[]): Promise<JobSummary[]>;
   getDocumentRef(docType: ProjectDocumentType, id: string): Promise<DocumentRef | null>;
+  /** Como getDocumentRef, mas nulo se o usuário não pode ver o documento. */
+  getDocumentForUser(
+    docType: ProjectDocumentType,
+    id: string,
+    userId: string,
+    access: UserPermissions,
+  ): Promise<DocumentRef | null>;
+  /** Ids das tarefas de cada job. */
+  getTaskIds(jobIds: string[]): Promise<Record<string, string[]>>;
+  /** Ganchos de outros módulos no fechamento de documentos. */
+  registerLifecycleListener(listener: DocumentLifecycleListener): void;
   countByClient(clientId: string): Promise<{ projects: number; openJobs: number }>;
   /** Projeto "Geral" do cliente, criado na primeira vez. */
   ensureClientDefaultProject(clientId: string): Promise<ProjectSummary>;

@@ -48,7 +48,8 @@ function EditProject({ project, onSaved, onCancel }: { project: Project; onSaved
         title: project.locked ? undefined : title,
         description: description.trim() ? textToHtml(description) : null,
         statusId,
-        responsibleId: project.can.editSpecialFields && responsibleId !== project.responsible?.id ? responsibleId : undefined,
+        responsibleId:
+          project.can.editSpecialFields && responsibleId !== project.responsible?.id ? responsibleId : undefined,
         budget: project.can.editBudget && budget !== '' ? Number(budget.replace(',', '.')) : undefined,
       });
       toast.success('Projeto salvo.');
@@ -149,13 +150,20 @@ export default function ProjectPage() {
               aria-label={data.favorite ? 'Tirar dos favoritos' : 'Favoritar'}
               disabled={data.situation !== 'OPEN' && !data.favorite}
               onClick={() =>
-                void run(() => api.projects.setFavorite(id, !data.favorite), data.favorite ? 'Tirado dos favoritos.' : 'Favoritado.')
+                void run(
+                  () => api.projects.setFavorite(id, !data.favorite),
+                  data.favorite ? 'Tirado dos favoritos.' : 'Favoritado.',
+                )
               }
             >
               <Star className={data.favorite ? 'fill-amber-400 text-amber-400' : ''} />
             </Button>
             {data.can.unlock && (
-              <Button variant="outline" disabled={acting} onClick={() => void run(() => api.projects.unlock(id), 'Projeto desbloqueado.')}>
+              <Button
+                variant="outline"
+                disabled={acting}
+                onClick={() => void run(() => api.projects.unlock(id), 'Projeto desbloqueado.')}
+              >
                 <Lock /> Desbloquear
               </Button>
             )}
@@ -194,7 +202,9 @@ export default function ProjectPage() {
                 variant="outline"
                 disabled={acting}
                 onClick={() => {
-                  const reopenDocuments = confirm('Reabrir também os jobs do projeto? (OK = sim, Cancelar = só o projeto)');
+                  const reopenDocuments = confirm(
+                    'Reabrir também os jobs do projeto? (OK = sim, Cancelar = só o projeto)',
+                  );
                   void run(() => api.projects.reopen(id, reopenDocuments), 'Projeto reaberto.');
                 }}
               >
@@ -268,7 +278,8 @@ export default function ProjectPage() {
           <CardContent className="grid gap-4 text-sm">
             {data.locked && (
               <p className="rounded-md bg-muted p-2 text-xs text-muted-foreground">
-                Projeto Geral do cliente, criado pelo sistema. Fica bloqueado até alguém com permissão total desbloquear.
+                Projeto Geral do cliente, criado pelo sistema. Fica bloqueado até alguém com permissão total
+                desbloquear.
               </p>
             )}
             <Field label="Status">

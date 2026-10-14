@@ -2,7 +2,12 @@
 
 const TIMEZONE = 'America/Sao_Paulo';
 
-const dateFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE, day: '2-digit', month: '2-digit', year: 'numeric' });
+const dateFormat = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: TIMEZONE,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
 const shortDateFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE, day: '2-digit', month: 'short' });
 const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', {
   timeZone: TIMEZONE,
@@ -13,7 +18,12 @@ const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', {
   minute: '2-digit',
 });
 const timeFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE, hour: '2-digit', minute: '2-digit' });
-const isoDateFormat = new Intl.DateTimeFormat('en-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' });
+const isoDateFormat = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TIMEZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function formatDate(value: string | null | undefined): string {
@@ -61,6 +71,17 @@ export function formatMinutes(minutes: number | null | undefined): string {
   return rest === 0 ? `${hours}h` : `${hours}h${String(rest).padStart(2, '0')}`;
 }
 
+/** "1:30", "1h30", "90" ou "1,5" → minutos. */
+export function parseDuration(text: string): number | null {
+  const value = text.trim().toLowerCase();
+  const clock = /^(\d{1,2})[:h](\d{1,2})?m?$/.exec(value);
+  if (clock) return Number(clock[1]) * 60 + Number(clock[2] ?? 0);
+  const hours = /^(\d+)[,.](\d+)$/.exec(value);
+  if (hours) return Math.round(Number(`${hours[1]}.${hours[2]}`) * 60);
+  if (/^\d+$/.test(value)) return Number(value);
+  return null;
+}
+
 export function formatMoney(value: number | null | undefined): string {
   return value == null ? '—' : money.format(value);
 }
@@ -80,8 +101,7 @@ export function initials(name: string): string {
 
 /** Texto simples digitado → HTML de parágrafos (o servidor higieniza). */
 export function textToHtml(text: string): string {
-  const escape = (line: string) =>
-    line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const escape = (line: string) => line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return text
     .split(/\n{2,}/)
     .map((block) => block.trim())

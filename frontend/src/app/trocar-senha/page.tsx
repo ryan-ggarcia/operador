@@ -65,16 +65,38 @@ export default function ChangePasswordPage() {
           <form onSubmit={submit} className="flex flex-col gap-4">
             <div className="grid gap-2">
               <Label htmlFor="current">Senha atual</Label>
-              <Input id="current" type="password" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} />
+              <Input
+                id="current"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={current}
+                onChange={(e) => setCurrent(e.target.value)}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="next">Nova senha</Label>
-              <Input id="next" type="password" autoComplete="new-password" minLength={8} required value={next} onChange={(e) => setNext(e.target.value)} />
+              <Input
+                id="next"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                required
+                value={next}
+                onChange={(e) => setNext(e.target.value)}
+              />
               <p className="text-xs text-muted-foreground">Pelo menos 8 caracteres.</p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="confirm">Confirme a nova senha</Label>
-              <Input id="confirm" type="password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              <Input
+                id="confirm"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+              />
             </div>
             {error && (
               <Alert variant="destructive">

@@ -345,6 +345,14 @@ export class PrismaJobRepository implements JobRepository {
     return this.prisma.task.findUnique({ where: { id }, omit: { updatedById: true } });
   }
 
+  findTaskIdsByJobs(jobIds: string[]): Promise<{ jobId: string; id: string }[]> {
+    if (jobIds.length === 0) return Promise.resolve([]);
+    return this.prisma.task.findMany({
+      where: { jobId: { in: jobIds } },
+      select: { id: true, jobId: true },
+    });
+  }
+
   async createTask(jobId: string, data: TaskData, actorId: string): Promise<TaskRecord> {
     const last = await this.prisma.task.aggregate({ where: { jobId }, _max: { order: true } });
     return this.prisma.task.create({

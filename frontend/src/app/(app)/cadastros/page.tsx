@@ -10,23 +10,10 @@ import { EmptyState, ErrorMessage, Loading, PageHeader } from '@/components/comm
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useResource } from '@/hooks/use-resource';
@@ -161,7 +148,13 @@ export default function PartiesPage() {
   const [active, setActive] = useState('true');
 
   const parties = useResource(
-    () => api.parties.list({ role, search: query || undefined, active: active === 'all' ? undefined : active === 'true', limit: 200 }),
+    () =>
+      api.parties.list({
+        role,
+        search: query || undefined,
+        active: active === 'all' ? undefined : active === 'true',
+        limit: 200,
+      }),
     [role, query, active],
   );
 
@@ -239,7 +232,9 @@ export default function PartiesPage() {
                     </TableCell>
                     <TableCell className="tabular-nums">{formatDocument(party.document)}</TableCell>
                     <TableCell className="text-sm">{party.email ?? party.phone1 ?? '—'}</TableCell>
-                    <TableCell className="text-sm">{party.city ? `${party.city}${party.state ? `/${party.state}` : ''}` : '—'}</TableCell>
+                    <TableCell className="text-sm">
+                      {party.city ? `${party.city}${party.state ? `/${party.state}` : ''}` : '—'}
+                    </TableCell>
                     <TableCell className="flex flex-wrap gap-1">
                       {party.roles.map((item) => (
                         <Badge key={item} variant="secondary">

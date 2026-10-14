@@ -44,6 +44,11 @@ src/modules/<modulo>/
   dto/             validação da entrada (class-validator)
 ```
 
+Quando um módulo precisa reagir a outro que depende dele (ex.: `projects`
+perguntar ao `timesheet` se há cronômetro ativo), o módulo de baixo expõe um
+gancho na fachada (`registerLifecycleListener`) e o de cima se registra no
+`onModuleInit`. Assim não há dependência circular.
+
 Permissões: `@RequireAccess('jobs', nível)`, `@RequireAdministrator()` ou
 `@LoadAccess()` (de `modules/auth/public`) carregam as permissões do usuário;
 o service recebe `@CurrentAccess()` e aplica as regras finas (registros
@@ -57,4 +62,5 @@ próprios, projeto oculto etc.).
 | `crm` | `/parties` (papéis, contatos, anotações), `/contacts`, `/client-groups`, `/departments` |
 | `settings` | `/settings/agency` |
 | `projects` | `/projects`, `/jobs`, `/tasks`, `/project-statuses`, `/predefined-briefings`, `/comments` |
+| `timesheet` | `/timesheet/current`, `/timesheet/start`, `/timesheet/stop`, `/timesheet/running`, `/timesheet/entries`, `/timesheet/documents/:tipo/:id`, `/work-schedules` |
 | — | `/health` |

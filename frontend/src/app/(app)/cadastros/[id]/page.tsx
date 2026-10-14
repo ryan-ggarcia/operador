@@ -173,7 +173,13 @@ function Contacts({ partyId, canEdit }: { partyId: string; canEdit: boolean }) {
       {canEdit && (
         <form onSubmit={add} className="flex flex-wrap gap-2">
           <Input className="w-48" placeholder="Nome" required value={name} onChange={(e) => setName(e.target.value)} />
-          <Input className="w-56" type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input
+            className="w-56"
+            type="email"
+            placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
           <Input className="w-40" placeholder="Telefone" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <Button type="submit" variant="outline">
             <Plus /> Adicionar

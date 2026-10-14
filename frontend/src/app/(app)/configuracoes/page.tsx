@@ -20,13 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useResource } from '@/hooks/use-resource';
@@ -133,9 +127,7 @@ function NewUserDialog({ profiles, onCreated }: { profiles: AccessProfile[]; onC
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Novo usuário</DialogTitle>
-          <DialogDescription>
-            O usuário entra com a senha provisória e troca no primeiro acesso.
-          </DialogDescription>
+          <DialogDescription>O usuário entra com a senha provisória e troca no primeiro acesso.</DialogDescription>
         </DialogHeader>
         <form onSubmit={save} className="grid gap-4">
           <div className="grid gap-2">
@@ -163,7 +155,13 @@ function NewUserDialog({ profiles, onCreated }: { profiles: AccessProfile[]; onC
           </div>
           <div className="grid gap-2">
             <Label htmlFor="user-password">Senha provisória</Label>
-            <Input id="user-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input
+              id="user-password"
+              minLength={8}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={saving || !profileId}>
@@ -240,8 +238,16 @@ function Users() {
               <TableRow key={user.id} className={user.active ? '' : 'opacity-60'}>
                 <TableCell className="font-medium">
                   {user.name}
-                  {user.isOwner && <Badge variant="secondary" className="ml-2">Dono da conta</Badge>}
-                  {user.mustChangePassword && <Badge variant="outline" className="ml-2">Senha provisória</Badge>}
+                  {user.isOwner && (
+                    <Badge variant="secondary" className="ml-2">
+                      Dono da conta
+                    </Badge>
+                  )}
+                  {user.mustChangePassword && (
+                    <Badge variant="outline" className="ml-2">
+                      Senha provisória
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
