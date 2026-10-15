@@ -17,6 +17,8 @@ export interface DocumentLifecycleListener {
    * HTTP (ex.: BadRequestException) para impedir.
    */
   beforeClose?(documents: ClosingDocuments): Promise<void>;
+  /** Antes de cancelar o projeto (ex.: o financeiro barra se houver faturas). */
+  beforeProjectCancel?(projectId: string): Promise<void>;
   /**
    * Depois que o projeto foi arquivado (documentos concluídos) ou cancelado
    * (documentos cancelados). Cada módulo fecha os seus documentos do projeto.

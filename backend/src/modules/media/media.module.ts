@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/public/index.js';
 import { CrmModule } from '../crm/public/index.js';
+import { FinanceModule } from '../finance/public/index.js';
 import { ProjectsModule } from '../projects/public/index.js';
 import { SettingsModule } from '../settings/public/index.js';
 import { MediaCatalogController } from './catalog/media-catalog.controller.js';
@@ -15,7 +16,7 @@ import { PrismaMediaCatalogRepository } from './repositories/prisma-media-catalo
 import { PrismaMediaRepository } from './repositories/prisma-media.repository.js';
 
 @Module({
-  imports: [AuthModule, CrmModule, ProjectsModule, SettingsModule],
+  imports: [AuthModule, CrmModule, ProjectsModule, SettingsModule, FinanceModule],
   controllers: [MediasController, MediaCatalogController],
   providers: [
     MediasService,

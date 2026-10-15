@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, Plus, RotateCcw, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Plus, RotateCcw, Send, Trash2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -92,6 +92,18 @@ export default function MediaPage() {
     }
   }
 
+  async function billing(action: 'send' | 'reopen') {
+    setActing(true);
+    try {
+      media.setData(action === 'send' ? await api.media.sendToFinance(id) : await api.media.reopenBilling(id));
+      toast.success(action === 'send' ? 'Faturas enviadas ao financeiro.' : 'Faturamento reaberto.');
+    } catch (caught) {
+      toast.error((caught as Error).message);
+    } finally {
+      setActing(false);
+    }
+  }
+
   async function addGrid() {
     try {
       media.setData(await api.media.addGrid(id, {}));
@@ -138,6 +150,29 @@ export default function MediaPage() {
           data.can.act &&
           (data.situation === 'OPEN' ? (
             <>
+              {data.sentToFinanceAt ? (
+                <Button
+                  variant="outline"
+                  disabled={acting}
+                  onClick={() =>
+                    confirm('Reabrir o faturamento cancela as faturas da mídia no financeiro. Continuar?') &&
+                    void billing('reopen')
+                  }
+                >
+                  <RotateCcw /> Reabrir faturamento
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  disabled={acting || !data.billingType}
+                  onClick={() =>
+                    confirm('Enviar as faturas ao financeiro? A mídia fica travada até reabrir o faturamento.') &&
+                    void billing('send')
+                  }
+                >
+                  <Send /> Enviar ao financeiro
+                </Button>
+              )}
               <Button variant="outline" disabled={acting} onClick={() => void act('cancel')}>
                 <XCircle /> Cancelar
               </Button>

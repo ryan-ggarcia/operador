@@ -259,7 +259,8 @@ export class ProjectsService {
     }
     const next = nextProjectSituation(project.situation, action);
     if (!next) throw new BadRequestException('O projeto já está nesta situação.');
-    // TODO(finance): não cancelar projeto com faturas (projetos.md, regra 6).
+    // Projeto com faturas não cancela (projetos.md, regra 6): quem barra é o financeiro.
+    if (next === 'CANCELED') await this.lifecycle.beforeProjectCancel(id);
     const cascade = action === 'reopen' && reopenDocuments ? 'reopen' : CASCADE[action];
     await this.projects.changeSituation(id, next, cascade, userId);
     // Ex.: o timesheet para os cronômetros ativos nos documentos do projeto.

@@ -37,4 +37,6 @@ export interface AuthFacade {
   getHourlyRate(userId: string): Promise<number | null>;
   /** Equipes ativas com os seus membros (filtros de pautas e relatórios). */
   getTeams(): Promise<TeamSummary[]>;
+  /** Só id, nome e se está ativo (ex.: colaborador como favorecido de despesa). */
+  getCollaboratorNames(ids: string[]): Promise<{ id: string; name: string; active: boolean }[]>;
 }

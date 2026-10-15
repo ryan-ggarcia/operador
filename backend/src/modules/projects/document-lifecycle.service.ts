@@ -18,6 +18,10 @@ export class DocumentLifecycleService {
     for (const listener of this.listeners) await listener.beforeClose?.(documents);
   }
 
+  async beforeProjectCancel(projectId: string): Promise<void> {
+    for (const listener of this.listeners) await listener.beforeProjectCancel?.(projectId);
+  }
+
   async afterProjectClosed(projectId: string, actorId: string, outcome: ProjectClosing): Promise<void> {
     for (const listener of this.listeners) {
       await listener.afterProjectClosed?.(projectId, actorId, outcome);

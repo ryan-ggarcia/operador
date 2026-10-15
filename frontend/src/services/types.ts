@@ -9,8 +9,16 @@ export interface Page<T> {
 }
 
 export type PermissionModule =
-  | 'projects' | 'jobs' | 'medias' | 'productions' | 'financial'
-  | 'clients' | 'suppliers' | 'providers' | 'vehicles' | 'employees';
+  | 'projects'
+  | 'jobs'
+  | 'medias'
+  | 'productions'
+  | 'financial'
+  | 'clients'
+  | 'suppliers'
+  | 'providers'
+  | 'vehicles'
+  | 'employees';
 
 export interface UserPermissions {
   modules: Record<PermissionModule, number>;

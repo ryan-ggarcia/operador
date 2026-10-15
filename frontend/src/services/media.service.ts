@@ -118,6 +118,15 @@ export interface Media extends MediaListItem {
   totals: MediaTotals | null;
   invoices: PlannedInvoice[];
   warnings: string[];
+  /** Faturas criadas no financeiro (depois do envio). */
+  bills: {
+    id: string;
+    kind: 'REVENUE' | 'EXPENSE';
+    title: string;
+    amount: number;
+    dueDate: string;
+    situation: 'OPEN' | 'PAID' | 'CANCELED';
+  }[];
   updatedAt: string;
   can: { edit: boolean; act: boolean };
 }
@@ -224,6 +233,12 @@ export class MediaService {
   }
   act(id: string, action: 'complete' | 'cancel' | 'reopen') {
     return this.http.post<Media>(`/medias/${id}/${action}`);
+  }
+  sendToFinance(id: string) {
+    return this.http.post<Media>(`/medias/${id}/send-to-finance`);
+  }
+  reopenBilling(id: string) {
+    return this.http.post<Media>(`/medias/${id}/reopen-billing`);
   }
   addPiece(id: string, title: string) {
     return this.http.post<Media>(`/medias/${id}/pieces`, { title });

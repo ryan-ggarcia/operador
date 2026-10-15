@@ -10,7 +10,7 @@ import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatDate, formatMoney } from '@/lib/format';
+import { formatDay, formatMoney } from '@/lib/format';
 import { api } from '@/services';
 import type { LineInput, Market, Media, MediaGrid as Grid, MediaLine, Program } from '@/services/media.service';
 
@@ -174,7 +174,7 @@ export function MediaGridCard({
                         : line.dailyInsertions
                           ? `${Object.keys(line.dailyInsertions).length} dia(s)`
                           : line.startDate
-                            ? `${formatDate(line.startDate)} a ${formatDate(line.endDate)}`
+                            ? `${formatDay(line.startDate)} a ${formatDay(line.endDate)}`
                             : '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{line.insertions}</TableCell>

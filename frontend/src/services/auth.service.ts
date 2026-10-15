@@ -1,13 +1,5 @@
 import type { HttpClient, TokenStore } from './http';
-import type {
-  AccessProfile,
-  Session,
-  Team,
-  UserPermissions,
-  UserRecord,
-  UserRef,
-  UserSummary,
-} from './types';
+import type { AccessProfile, Session, Team, UserPermissions, UserRecord, UserRef, UserSummary } from './types';
 
 export class AuthService {
   constructor(

@@ -264,10 +264,28 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      Número dividido com jobs; arquivar/cancelar o projeto fecha as mídias.
      Redes, praças, programas, métricas de custo e status. Front: pauta
      `/midia`, documento `/midia/:id` e `/midia/configuracoes`.
-     Pendente na mídia: envio ao financeiro (depende do `finance`), PDF do PI,
-     tabelas de preço de TV/rádio, regra de projeto oculto nas mídias.
+     Envio ao financeiro (`/medias/:id/send-to-finance`): só as faturas que
+     passam pelo caixa da agência viram lançamento; a mídia fica travada,
+     com retrato (snapshot) de cliente, veículo e valores; reabrir o
+     faturamento cancela as faturas se nenhuma foi quitada.
+     Pendente na mídia: PDF do PI, tabelas de preço de TV/rádio, regra de
+     projeto oculto nas mídias.
+   - `finance` (15/10/2026): receitas e despesas à vista, parceladas (sobra
+     dos centavos na última; datas mensais sem pular mês) ou recorrentes;
+     acréscimos e descontos (só à vista); quitar (em lote, só um tipo),
+     cancelar (só esta, esta e as próximas, todas abertas), reabrir; fatura
+     de documento não muda de pessoa/cliente/projeto e só se cancela pelo
+     documento; transferências entre contas (data futura = agendada;
+     guardadas só na tabela `transfer`, sem lançamentos-par, para não exigir
+     pessoa); saldo por conta; resumo do período; plano de contas do Operand
+     no seed (com PI/PP – Repasse, PI – Veículos e PP – Fornecedores para o
+     envio dos documentos); permissões por nível e por receitas, despesas e
+     transferências. Gancho `beforeProjectCancel`: projeto com faturas não
+     cancela. Front: `/financeiro` (mês a mês) e `/financeiro/configuracoes`.
+     Fora da v1 (como no mapeamento): conciliação OFX, boleto, NFS-e, rateio
+     por centro de custo e agrupamento de faturas.
    Falta:
-   `production`, `finance` (e a regra "não cancelar projeto com faturas"),
+   `production`,
    `files`, `notifications` (menções), `ai`; templates, recorrência,
    duplicar projeto, aprovação de peças; `docker-compose.yml`, Dockerfiles e
    deploy. O Docker não está instalado na máquina do usuário.

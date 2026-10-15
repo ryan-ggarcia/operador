@@ -10,6 +10,10 @@ import {
   type AuthRepository,
 } from './repositories/auth.repository.js';
 import {
+  COLLABORATOR_REPOSITORY,
+  type CollaboratorRepository,
+} from './repositories/collaborator.repository.js';
+import {
   USER_ADMIN_REPOSITORY,
   type UserAdminRepository,
 } from './repositories/user-admin.repository.js';
@@ -20,6 +24,7 @@ export class AuthFacadeService implements AuthFacade {
     @Inject(AUTH_REPOSITORY) private readonly repository: AuthRepository,
     @Inject(USER_ADMIN_REPOSITORY) private readonly admin: UserAdminRepository,
     @Inject(PERMISSIONS_CACHE) private readonly cache: PermissionsCache,
+    @Inject(COLLABORATOR_REPOSITORY) private readonly collaborators: CollaboratorRepository,
   ) {}
 
   async getUsers(ids: string[]): Promise<UserSummary[]> {
@@ -47,6 +52,15 @@ export class AuthFacadeService implements AuthFacade {
     );
     this.cache.set(userId, permissions);
     return permissions;
+  }
+
+  async getCollaboratorNames(ids: string[]): Promise<{ id: string; name: string; active: boolean }[]> {
+    if (ids.length === 0) return [];
+    const collaborators = await this.collaborators.list({});
+    const wanted = new Set(ids);
+    return collaborators
+      .filter((item) => wanted.has(item.id))
+      .map(({ id, name, active }) => ({ id, name, active }));
   }
 
   async getTeams(): Promise<TeamSummary[]> {

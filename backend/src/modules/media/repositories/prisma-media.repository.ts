@@ -226,6 +226,27 @@ export class PrismaMediaRepository implements MediaRepository {
     });
   }
 
+  async setSentToFinance(id: string, at: Date | null, snapshot: unknown, actorId: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.mediaHistory.create({
+        data: {
+          entityType: 'media',
+          entityId: id,
+          userId: actorId,
+          action: at ? 'sent-to-finance' : 'billing-reopened',
+        },
+      }),
+      this.prisma.media.update({
+        where: { id },
+        data: {
+          sentToFinanceAt: at,
+          snapshot: snapshot == null ? Prisma.DbNull : (snapshot as Prisma.InputJsonValue),
+          updatedById: actorId,
+        },
+      }),
+    ]);
+  }
+
   async saveTotals(id: string, totals: SavedTotals): Promise<void> {
     await this.prisma.media.update({ where: { id }, data: totals });
   }

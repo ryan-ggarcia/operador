@@ -81,6 +81,18 @@ export class MediasController {
     return this.medias.act(user.id, access, id, 'reopen');
   }
 
+  @Post(':id/send-to-finance')
+  @HttpCode(HttpStatus.OK)
+  sendToFinance(@CurrentUser() user: AuthUser, @CurrentAccess() access: UserPermissions, @Param('id', ParseUUIDPipe) id: string) {
+    return this.medias.sendToFinance(user.id, access, id);
+  }
+
+  @Post(':id/reopen-billing')
+  @HttpCode(HttpStatus.OK)
+  reopenBilling(@CurrentUser() user: AuthUser, @CurrentAccess() access: UserPermissions, @Param('id', ParseUUIDPipe) id: string) {
+    return this.medias.reopenBilling(user.id, access, id);
+  }
+
   @Post(':id/members')
   @HttpCode(HttpStatus.OK)
   addMembers(

@@ -163,6 +163,8 @@ export interface MediaRepository {
     clearGrids: boolean,
   ): Promise<void>;
   saveTotals(id: string, totals: SavedTotals): Promise<void>;
+  /** Marca (ou desmarca, com null) o envio ao financeiro, com o retrato dos dados. */
+  setSentToFinance(id: string, at: Date | null, snapshot: unknown, actorId: string): Promise<void>;
   changeSituation(id: string, situation: MediaSituation, actorId: string): Promise<void>;
   /** Fecha as mídias abertas do projeto (arquivar conclui, cancelar cancela). */
   closeByProject(projectId: string, situation: 'DONE' | 'CANCELED', actorId: string): Promise<number>;

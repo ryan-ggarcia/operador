@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +28,32 @@ export function MediaTotalsPanel({ media }: { media: Media }) {
   const totals = media.totals;
   return (
     <div className="flex flex-col gap-4">
+      {media.sentToFinanceAt && (
+        <Alert>
+          <AlertDescription>
+            <div className="mb-1 font-medium text-foreground">Enviada ao financeiro (travada para edição)</div>
+            {media.bills.length === 0 ? (
+              'Nenhuma fatura da agência: o veículo fatura direto o cliente.'
+            ) : (
+              <ul className="grid gap-1">
+                {media.bills.map((bill) => (
+                  <li key={bill.id} className="flex justify-between gap-2">
+                    <Link href="/financeiro" className="hover:underline">
+                      {bill.kind === 'REVENUE' ? 'Receita' : 'Despesa'} ·{' '}
+                      {bill.situation === 'PAID'
+                        ? 'quitada'
+                        : bill.situation === 'CANCELED'
+                          ? 'cancelada'
+                          : 'em aberto'}
+                    </Link>
+                    <span className="tabular-nums">{formatMoney(bill.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       {media.warnings.length > 0 && (
         <Alert>
           <AlertTriangle />

@@ -30,6 +30,16 @@ export function formatDate(value: string | null | undefined): string {
   return value ? dateFormat.format(new Date(value)) : '—';
 }
 
+/**
+ * Data sem hora (vencimento, pagamento, período): vem do banco como
+ * meia-noite UTC e não pode passar pelo fuso, senão mostra o dia anterior.
+ */
+export function formatDay(value: string | null | undefined): string {
+  if (!value) return '—';
+  const [year, month, day] = value.slice(0, 10).split('-');
+  return `${day}/${month}/${year}`;
+}
+
 export function formatDateTime(value: string | null | undefined): string {
   return value ? dateTimeFormat.format(new Date(value)) : '—';
 }

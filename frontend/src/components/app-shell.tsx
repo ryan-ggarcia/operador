@@ -11,6 +11,7 @@ import {
   Menu,
   Settings,
   Users,
+  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -50,6 +51,7 @@ const NAV: NavItem[] = [
     modules: ['projects'],
   },
   { href: '/midia', label: 'Mídia', icon: Megaphone, modules: ['medias'] },
+  { href: '/financeiro', label: 'Financeiro', icon: Wallet, modules: ['financial'] },
   {
     href: '/timesheet',
     label: 'Timesheet',

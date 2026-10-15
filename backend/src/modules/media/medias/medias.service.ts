@@ -12,6 +12,7 @@ import { endOfLocalDay } from '../../../shared/time/timezone.js';
 import type { Page } from '../../../shared/validation/pagination.js';
 import { AUTH_FACADE, READ_ALL, type AuthFacade, type UserPermissions } from '../../auth/public/index.js';
 import { CRM_FACADE, type CrmFacade } from '../../crm/public/index.js';
+import { FINANCE_FACADE, type FinanceFacade, type SourceBill } from '../../finance/public/index.js';
 import { PROJECTS_FACADE, type ProjectsFacade } from '../../projects/public/index.js';
 import { SETTINGS_FACADE, type SettingsFacade } from '../../settings/public/index.js';
 import {
@@ -152,6 +153,8 @@ export interface MediaView extends MediaListView, Omit<MediaHeader, 'title' | 'd
   grids: (GridRecord & { totals: GridTotals })[];
   totals: MediaTotals | null;
   invoices: PlannedInvoice[];
+  /** Faturas já criadas no financeiro (depois do envio). */
+  bills: SourceBill[];
   /** Problemas que impedem calcular os totais ou as faturas. */
   warnings: string[];
   can: { edit: boolean; act: boolean };
@@ -176,6 +179,7 @@ export class MediasService {
     @Inject(CRM_FACADE) private readonly crm: CrmFacade,
     @Inject(AUTH_FACADE) private readonly auth: AuthFacade,
     @Inject(SETTINGS_FACADE) private readonly settings: SettingsFacade,
+    @Inject(FINANCE_FACADE) private readonly finance: FinanceFacade,
   ) {}
 
   async list(userId: string, access: UserPermissions, query: MediaListQuery): Promise<Page<MediaListView>> {
@@ -224,6 +228,7 @@ export class MediasService {
       grids,
       totals,
       invoices,
+      bills: media.sentToFinanceAt ? await this.finance.getBillsBySource('MEDIA', media.id) : [],
       warnings,
       can: {
         edit: canEditMedia(userId, access, media),
@@ -356,6 +361,75 @@ export class MediasService {
       throw new BadRequestException('A mídia foi enviada ao financeiro: reabra as faturas antes de cancelar.');
     }
     await this.medias.changeSituation(id, next, userId);
+    return this.get(userId, access, id);
+  }
+
+  /**
+   * Envia as faturas da agência ao financeiro (as de "veículo recebe do
+   * cliente" ficam só como informação) e trava a mídia.
+   */
+  async sendToFinance(userId: string, access: UserPermissions, id: string): Promise<MediaView> {
+    const media = await this.requireEditable(userId, access, id);
+    if (!media.vehicleId) throw new BadRequestException('Escolha o veículo antes de enviar ao financeiro.');
+    if (!media.billingType) throw new BadRequestException('Escolha o tipo de faturamento antes de enviar.');
+    if (!media.firstDueDate) throw new BadRequestException('Informe o 1º vencimento antes de enviar.');
+    let invoices: PlannedInvoice[];
+    let totals: MediaTotals;
+    try {
+      totals = mediaTotals(media.grids.map((grid) => gridTotals(grid.lines.map(toLineValues))), termsOf(media));
+      invoices = billingPlan(media.billingType, totals, media.negotiatedCommission != null);
+    } catch (error) {
+      if (error instanceof MediaMathError) throw new BadRequestException(error.message);
+      throw error;
+    }
+    if (totals.total <= 0) throw new BadRequestException('A mídia está sem valor.');
+    const names = await this.names([media]);
+    const number = this.toListView(media, names, new Date()).number;
+    const dueDate = media.firstDueDate.toISOString().slice(0, 10);
+    const agencyInvoices = invoices.filter((invoice) => invoice.kind !== null);
+    await this.finance.createBillsFromSource(
+      'MEDIA',
+      id,
+      agencyInvoices.map((invoice) => {
+        // Na receita, a pessoa é quem paga a agência; na despesa, quem recebe dela.
+        const party = invoice.kind === 'REVENUE' ? invoice.payer : invoice.payee;
+        return {
+          kind: invoice.kind!,
+          invoiceClass: invoice.invoiceClass as Exclude<typeof invoice.invoiceClass, `THIRD_PARTY_${string}`>,
+          partyType: party === 'client' ? 'CLIENT' : 'VEHICLE',
+          partyId: party === 'client' ? media.clientId : media.vehicleId!,
+          title: `PI ${number} — ${media.title}`,
+          amount: invoice.amount,
+          dueDate,
+          clientId: media.clientId,
+          projectId: media.projectId,
+          documentNumber: media.estimateNumber,
+        };
+      }),
+      userId,
+    );
+    // Retrato de cliente, veículo e valores: o PI enviado não muda depois.
+    const snapshot = {
+      client: names.party(media.clientId),
+      vehicle: names.party(media.vehicleId),
+      vehicleContact: names.contact(media.vehicleContactId),
+      totals,
+      invoices,
+      billingType: media.billingType,
+      firstDueDate: dueDate,
+    };
+    await this.medias.setSentToFinance(id, new Date(), snapshot, userId);
+    return this.get(userId, access, id);
+  }
+
+  /** Cancela as faturas no financeiro (se nenhuma foi quitada) e destrava a mídia. */
+  async reopenBilling(userId: string, access: UserPermissions, id: string): Promise<MediaView> {
+    const media = await this.requireViewable(userId, access, id);
+    if (!canActOnMedia(userId, access, media)) throw new ForbiddenException('Sem permissão para alterar esta mídia.');
+    if (!media.sentToFinanceAt) throw new BadRequestException('A mídia não foi enviada ao financeiro.');
+    if (media.situation !== 'OPEN') throw new BadRequestException('Reabra a mídia antes de reabrir o faturamento.');
+    await this.finance.reopenSource('MEDIA', id, userId);
+    await this.medias.setSentToFinance(id, null, null, userId);
     return this.get(userId, access, id);
   }
 

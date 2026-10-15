@@ -63,5 +63,6 @@ próprios, projeto oculto etc.).
 | `settings` | `/settings/agency` |
 | `projects` | `/projects`, `/jobs`, `/tasks`, `/project-statuses`, `/predefined-briefings`, `/comments` |
 | `timesheet` | `/timesheet/current`, `/timesheet/start`, `/timesheet/stop`, `/timesheet/running`, `/timesheet/entries`, `/timesheet/documents/:tipo/:id`, `/work-schedules` |
-| `media` | `/medias` (peças, grades, linhas, situação, envolvidos), `/medias/billing-types`, `/media-settings/*` (redes, praças, programas, métricas de custo, status) |
+| `media` | `/medias` (peças, grades, linhas, situação, envolvidos, `send-to-finance`, `reopen-billing`), `/medias/billing-types`, `/media-settings/*` (redes, praças, programas, métricas de custo, status) |
+| `finance` | `/finance/bills` (lançamentos, `settle`, `cancel`, `reopen`), `/finance/summary`, `/finance/transfers`, `/finance/accounts`, `/finance/categories`, `/finance-settings/*` |
 | — | `/health` |

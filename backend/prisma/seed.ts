@@ -117,14 +117,36 @@ const PAYMENT_METHODS = [
   'Boleto', 'Cartão', 'Cheque', 'Débito automático', 'Depósito', 'Dinheiro', 'Pix', 'Transferência',
 ];
 
-const CATEGORIES: { name: string; kind: 'REVENUE' | 'EXPENSE' }[] = [
-  { name: 'Serviços prestados', kind: 'REVENUE' },
-  { name: 'Comissão de mídia', kind: 'REVENUE' },
-  { name: 'Comissão de produção', kind: 'REVENUE' },
-  { name: 'Fornecedores', kind: 'EXPENSE' },
-  { name: 'Veículos de mídia', kind: 'EXPENSE' },
+/**
+ * Plano de contas da agência no Operand (docs/operand/financeiro.md, 2.7),
+ * mais as categorias de repasse, veículos e fornecedores que o envio de mídia
+ * e produção ao financeiro usa.
+ */
+const CATEGORIES: { name: string; kind: 'REVENUE' | 'EXPENSE'; children?: string[] }[] = [
+  { name: 'FEE', kind: 'REVENUE' },
+  { name: 'Job a Job', kind: 'REVENUE' },
+  { name: 'PP – Comissão', kind: 'REVENUE' },
+  { name: 'PP – Repasse', kind: 'REVENUE' },
+  { name: 'Honorário', kind: 'REVENUE' },
+  { name: 'PI – Comissão', kind: 'REVENUE' },
+  { name: 'PI – Repasse', kind: 'REVENUE' },
+  { name: 'PI – Veículos', kind: 'EXPENSE' },
+  { name: 'PP – Fornecedores', kind: 'EXPENSE' },
   { name: 'Impostos', kind: 'EXPENSE' },
-  { name: 'Despesas administrativas', kind: 'EXPENSE' },
+  { name: 'Aluguel', kind: 'EXPENSE' },
+  { name: 'Telefone', kind: 'EXPENSE' },
+  { name: 'Energia Elétrica', kind: 'EXPENSE' },
+  { name: 'Água e Esgoto', kind: 'EXPENSE' },
+  { name: 'Telefonia', kind: 'EXPENSE' },
+  { name: 'Materiais de Escritório', kind: 'EXPENSE' },
+  { name: 'Limpeza', kind: 'EXPENSE' },
+  { name: 'Manutenção', kind: 'EXPENSE' },
+  { name: 'Equipamentos', kind: 'EXPENSE' },
+  {
+    name: 'Pessoal',
+    kind: 'EXPENSE',
+    children: ['Benefícios', 'Salários', 'Guias', '13º Salário', 'Férias', 'Rescisão'],
+  },
 ];
 
 /** Jornada padrão: 42h30 por semana, de segunda a sexta, meta de 8h30 por dia. */
@@ -204,7 +226,12 @@ async function seedFinance() {
     });
   }
   if ((await prisma.category.count()) === 0) {
-    await prisma.category.createMany({ data: CATEGORIES });
+    for (const { children, ...category } of CATEGORIES) {
+      const parent = await prisma.category.create({ data: category });
+      for (const name of children ?? []) {
+        await prisma.category.create({ data: { name, kind: category.kind, parentId: parent.id } });
+      }
+    }
   }
   if ((await prisma.account.count()) === 0) {
     await prisma.account.create({ data: { name: 'Conta principal', isDefault: true } });
