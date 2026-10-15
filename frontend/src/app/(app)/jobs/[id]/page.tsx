@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Attachments } from '@/components/attachments';
+import { ApprovalAttachments, involvedOf } from '@/components/approvals';
 import { Comments } from '@/components/comments';
 import {
   ErrorMessage,
@@ -348,7 +348,11 @@ export default function JobPage() {
               <Comments docType="JOB" docId={data.id} />
             </TabsContent>
             <TabsContent value="files" className="pt-3">
-              <Attachments ownerType="job" ownerId={data.id} />
+              <ApprovalAttachments
+                docType="JOB"
+                docId={data.id}
+                involved={involvedOf([data.responsible, data.requester, ...data.members])}
+              />
             </TabsContent>
             <TabsContent value="history" className="pt-3">
               <History jobId={data.id} />

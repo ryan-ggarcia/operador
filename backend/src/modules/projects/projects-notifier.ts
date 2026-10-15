@@ -87,4 +87,30 @@ export class ProjectsNotifier {
       });
     }
   }
+
+  approvalRequested(target: NotifiedDocument, approverIds: string[], actorId: string, fileName: string): Promise<void> {
+    return this.notifications.notify({
+      event: 'approval.requested',
+      userIds: approverIds,
+      actorId,
+      action: `pediu sua aprovação de "${fileName}" em`,
+      target,
+    });
+  }
+
+  approvalDecided(
+    target: NotifiedDocument,
+    outcome: 'APPROVED' | 'REJECTED',
+    requesterId: string,
+    actorId: string,
+    fileName: string,
+  ): Promise<void> {
+    return this.notifications.notify({
+      event: outcome === 'APPROVED' ? 'approval.approved' : 'approval.rejected',
+      userIds: [requesterId],
+      actorId,
+      action: `${outcome === 'APPROVED' ? 'aprovou' : 'reprovou'} "${fileName}" em`,
+      target,
+    });
+  }
 }

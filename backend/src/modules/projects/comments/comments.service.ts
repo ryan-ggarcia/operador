@@ -7,17 +7,14 @@ import {
 } from '@nestjs/common';
 import { sanitizeRichText } from '../../../shared/html/sanitize.js';
 import type { UserPermissions } from '../../auth/public/index.js';
-import { canEditJob } from '../domain/job-rules.js';
-import { canEditProject } from '../domain/project-rules.js';
-import { JobsService } from '../jobs/jobs.service.js';
-import { ProjectsService } from '../projects/projects.service.js';
 import {
   COMMENT_REPOSITORY,
   type CommentRecord,
   type CommentRepository,
   type ProjectDocType,
 } from '../repositories/status.repository.js';
-import { jobTarget, projectTarget, ProjectsNotifier, type NotifiedDocument } from '../projects-notifier.js';
+import { DocumentAccessService, type DocumentAccess } from '../document-access.service.js';
+import { ProjectsNotifier } from '../projects-notifier.js';
 
 export interface CommentInput {
   html: string;
@@ -26,12 +23,7 @@ export interface CommentInput {
   fileId?: string | null;
 }
 
-interface CommentTarget {
-  involvedUserIds: string[];
-  canModerate: boolean;
-  responsibleId: string | null;
-  document: NotifiedDocument;
-}
+type CommentTarget = DocumentAccess;
 
 /**
  * Comentários (interações) de projetos e jobs. Só os envolvidos podem ser
@@ -41,8 +33,7 @@ interface CommentTarget {
 export class CommentsService {
   constructor(
     @Inject(COMMENT_REPOSITORY) private readonly comments: CommentRepository,
-    private readonly projects: ProjectsService,
-    private readonly jobs: JobsService,
+    private readonly documents: DocumentAccessService,
     private readonly notifier: ProjectsNotifier,
   ) {}
 
@@ -129,38 +120,12 @@ export class CommentsService {
     return unique;
   }
 
-  private async target(
+  private target(
     userId: string,
     access: UserPermissions,
     docType: ProjectDocType,
     docId: string,
   ): Promise<CommentTarget> {
-    if (docType === 'PROJECT') {
-      const project = await this.projects.requireViewable(userId, access, docId);
-      return {
-        involvedUserIds: [project.responsibleId, project.requesterId, ...project.memberIds].filter(
-          (id): id is string => Boolean(id),
-        ),
-        canModerate: canEditProject(userId, access, project),
-        responsibleId: project.responsibleId,
-        document: projectTarget(project),
-      };
-    }
-    const job = await this.jobs.requireViewable(userId, access, docId);
-    return {
-      involvedUserIds: [job.responsibleId, job.requesterId, ...job.memberIds].filter(
-        (id): id is string => Boolean(id),
-      ),
-      canModerate: canEditJob(userId, access, {
-        situation: job.situation,
-        responsibleId: job.responsibleId,
-        requesterId: job.requesterId,
-        memberIds: job.memberIds,
-        projectHidden: job.projectHidden,
-        involvedInProject: job.projectInvolvedIds.includes(userId),
-      }),
-      responsibleId: job.responsibleId,
-      document: jobTarget(job),
-    };
+    return this.documents.resolve(userId, access, docType, docId);
   }
 }

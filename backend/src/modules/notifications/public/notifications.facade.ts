@@ -20,6 +20,9 @@ export const NOTIFICATION_EVENTS = {
     group: 'Documentos',
     label: 'Quando reabrem algo em que estou envolvido',
   },
+  'approval.requested': { group: 'Aprovação de peças', label: 'Quando me pedem para aprovar uma peça' },
+  'approval.approved': { group: 'Aprovação de peças', label: 'Quando uma peça que pedi é aprovada' },
+  'approval.rejected': { group: 'Aprovação de peças', label: 'Quando uma peça que pedi é reprovada' },
 } as const;
 
 export type NotificationEvent = keyof typeof NOTIFICATION_EVENTS;

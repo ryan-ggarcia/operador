@@ -328,9 +328,22 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      cabeçalho (contador a cada minuto e ao voltar à aba, lista, marcar
      lidos) e preferências em "Notificações" no menu do usuário.
      Pendente: aprovação de peças (eventos próprios), avisos do financeiro.
-   Falta:
-   `ai`; templates, recorrência,
-   duplicar projeto, aprovação de peças; `docker-compose.yml`, Dockerfiles e
+   - Aprovação de peças (15/10/2026, em `projects`): quem pode alterar o
+     projeto ou job pede a aprovação de um anexo dele a envolvidos (sem
+     incluir a si mesmo), com prazo opcional; um pedido aberto por arquivo.
+     Regra escolhida (o Operand não mostra): **qualquer reprovação reprova
+     na hora; aprova quando todos aprovam**. Reprovar exige motivo; cada
+     aprovador vota uma vez; cancelar só quem pediu ou nível Total; marcadores
+     (posição em %) só de envolvidos e só com o pedido aberto. Avisos:
+     pedido aos aprovadores, aprovado/reprovado a quem pediu. Acesso ao
+     documento centralizado em `DocumentAccessService` (comentários e
+     aprovações). Front: selo da situação e botão "Solicitar aprovação" nos
+     anexos de job e projeto (o componente de anexos recebe extensões por
+     arquivo), diálogo com a imagem, marcadores e votos, e o painel
+     "Aprovações para você" na pauta de jobs.
+   Falta (a integração com o Claude, módulo `ai`, fica por último, a pedido
+   do usuário em 15/10/2026):
+   templates, recorrência, duplicar projeto; `docker-compose.yml`, Dockerfiles e
    deploy. O Docker não está instalado na máquina do usuário.
 5. Engenharia reversa de faturamento (14/10/2026): resultados em
    `docs/operand/midia.md` (2.8) e `producao.md` (2.9); registro técnico em

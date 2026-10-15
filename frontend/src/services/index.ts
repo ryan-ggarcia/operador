@@ -1,5 +1,6 @@
 // Ponto único de montagem dos serviços da API (injeção de dependências do
 // front): os componentes usam `api.<área>` e nunca chamam fetch direto.
+import { ApprovalsService } from './approvals.service';
 import { AuthService, UsersService } from './auth.service';
 import { FilesService } from './files.service';
 import { HttpClient, LocalTokenStore } from './http';
@@ -33,4 +34,5 @@ export const api = {
   production: new ProductionService(http),
   files: new FilesService(http),
   notifications: new NotificationsService(http),
+  approvals: new ApprovalsService(http),
 };

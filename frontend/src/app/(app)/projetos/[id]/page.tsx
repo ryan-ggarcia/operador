@@ -4,7 +4,7 @@ import { Archive, Loader2, Lock, Pencil, RotateCcw, Star, XCircle } from 'lucide
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Attachments } from '@/components/attachments';
+import { ApprovalAttachments, involvedOf } from '@/components/approvals';
 import { Comments } from '@/components/comments';
 import {
   EmptyState,
@@ -274,7 +274,11 @@ export default function ProjectPage() {
               <Comments docType="PROJECT" docId={data.id} />
             </TabsContent>
             <TabsContent value="files" className="pt-3">
-              <Attachments ownerType="project" ownerId={data.id} />
+              <ApprovalAttachments
+                docType="PROJECT"
+                docId={data.id}
+                involved={involvedOf([data.responsible, data.requester, ...data.members])}
+              />
             </TabsContent>
           </Tabs>
         </div>

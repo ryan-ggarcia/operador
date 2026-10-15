@@ -2,6 +2,7 @@
 
 import { Search } from 'lucide-react';
 import { useState } from 'react';
+import { PendingApprovals } from '@/components/approvals';
 import { EmptyState, ErrorMessage, Loading, PageHeader } from '@/components/common';
 import { JobsTable } from '@/components/jobs/jobs-table';
 import { NewJobDialog } from '@/components/jobs/new-job-dialog';
@@ -58,6 +59,8 @@ export default function JobsPage() {
         description={scope === 'mine' ? 'Os jobs em que você está envolvido.' : 'Todos os jobs que você pode ver.'}
         actions={<NewJobDialog onCreated={() => void jobs.reload()} />}
       />
+
+      <PendingApprovals />
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <Tabs value={scope} onValueChange={(value) => setScope(value as 'mine' | 'all')}>

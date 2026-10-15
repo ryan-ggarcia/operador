@@ -68,7 +68,26 @@ async function openFile(file: StoredFile, inline: boolean) {
   }
 }
 
-function FileRow({ file, onChanged }: { file: StoredFile; onChanged: () => void }) {
+/**
+ * Extensões por arquivo vindas do módulo dono do documento (ex.: aprovação
+ * de peças em jobs): o componente de anexos não conhece essas regras.
+ */
+export interface AttachmentExtensions {
+  /** Abaixo do nome (ex.: situação da aprovação). */
+  extra?: (file: StoredFile) => React.ReactNode;
+  /** Botões ao lado de baixar/excluir. */
+  actions?: (file: StoredFile) => React.ReactNode;
+}
+
+function FileRow({
+  file,
+  onChanged,
+  extensions,
+}: {
+  file: StoredFile;
+  onChanged: () => void;
+  extensions?: AttachmentExtensions;
+}) {
   const [editing, setEditing] = useState(false);
   const [description, setDescription] = useState(file.description ?? '');
 
@@ -133,8 +152,10 @@ function FileRow({ file, onChanged }: { file: StoredFile; onChanged: () => void 
         ) : (
           file.description && <p className="mt-0.5 text-sm">{file.description}</p>
         )}
+        {extensions?.extra?.(file)}
       </div>
       <div className="flex shrink-0 gap-0.5">
+        {extensions?.actions?.(file)}
         <Button variant="ghost" size="icon-sm" title="Baixar" onClick={() => void openFile(file, false)}>
           <Download />
         </Button>
@@ -154,7 +175,15 @@ function FileRow({ file, onChanged }: { file: StoredFile; onChanged: () => void 
 }
 
 /** Anexos de um documento: arrastar e soltar, lista, descrição, download e exclusão. */
-export function Attachments({ ownerType, ownerId }: { ownerType: FileOwnerType; ownerId: string }) {
+export function Attachments({
+  ownerType,
+  ownerId,
+  extensions,
+}: {
+  ownerType: FileOwnerType;
+  ownerId: string;
+  extensions?: AttachmentExtensions;
+}) {
   const files = useResource(() => api.files.list(ownerType, ownerId), [ownerType, ownerId]);
   const usage = useResource(() => api.files.usage(), []);
   const input = useRef<HTMLInputElement>(null);
@@ -244,7 +273,12 @@ export function Attachments({ ownerType, ownerId }: { ownerType: FileOwnerType; 
       ) : (
         <ul className="divide-y">
           {items.map((file) => (
-            <FileRow key={`${file.id}-${file.description}`} file={file} onChanged={() => void files.reload()} />
+            <FileRow
+              key={`${file.id}-${file.description}`}
+              file={file}
+              extensions={extensions}
+              onChanged={() => void files.reload()}
+            />
           ))}
         </ul>
       )}
