@@ -19,19 +19,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useResource } from '@/hooks/use-resource';
 import { localDateTimeToIso, textToHtml } from '@/lib/format';
 import { api } from '@/services';
 import type { NamedRef, Project } from '@/services/types';
 
 const GENERAL = '__geral__';
+const NO_TEMPLATE = '__none__';
 
 /** Novo job. Sem projeto, o servidor coloca no projeto "Geral" do cliente. */
 export function NewJobDialog({
@@ -50,13 +46,27 @@ export function NewJobDialog({
   const [title, setTitle] = useState('');
   const [client, setClient] = useState<NamedRef | null>(fixedClient ?? null);
   const [projectId, setProjectId] = useState<string>(fixedProject?.id ?? GENERAL);
-  const [projects, setProjects] = useState<{ clientId: string | null; items: Project[] }>({ clientId: null, items: [] });
+  const [projects, setProjects] = useState<{ clientId: string | null; items: Project[] }>({
+    clientId: null,
+    items: [],
+  });
   const [responsibleId, setResponsibleId] = useState<string | null>(null);
   const [statusId, setStatusId] = useState<string | null>(null);
   const [deadlineDate, setDeadlineDate] = useState('');
   const [deadlineTime, setDeadlineTime] = useState('');
   const [briefing, setBriefing] = useState('');
+  const [templateJobId, setTemplateJobId] = useState(NO_TEMPLATE);
   const [saving, setSaving] = useState(false);
+  const templateJobs = useResource(() => (open ? api.templates.jobs() : Promise.resolve([])), [open]);
+  const templateJob = templateJobs.data?.find((item) => item.id === templateJobId);
+
+  function chooseTemplate(id: string) {
+    setTemplateJobId(id);
+    const chosen = templateJobs.data?.find((item) => item.id === id);
+    if (!chosen) return;
+    setResponsibleId(chosen.responsibleId);
+    setStatusId(chosen.statusId);
+  }
 
   // Projetos abertos do cliente (só para quem tem acesso a projetos).
   const listProjects = open && !fixedProject && client !== null && can('projects');
@@ -84,6 +94,7 @@ export function NewJobDialog({
     setDeadlineDate('');
     setDeadlineTime('');
     setBriefing('');
+    setTemplateJobId(NO_TEMPLATE);
   }
 
   async function save(openAfter: boolean) {
@@ -98,16 +109,24 @@ export function NewJobDialog({
           ? localDateTimeToIso(deadlineDate, deadlineTime)
           : deadlineDate
         : null;
-      const job = await api.jobs.create({
-        title,
-        clientId: client.id,
-        projectId: projectId === GENERAL ? null : projectId,
-        responsibleId,
-        statusId,
-        deadline,
-        deadlineHasTime: Boolean(deadlineDate && deadlineTime),
-        briefing: briefing.trim() ? textToHtml(briefing) : null,
-      });
+      const target = { clientId: client.id, projectId: projectId === GENERAL ? null : projectId };
+      const schedule = { deadline, deadlineHasTime: Boolean(deadlineDate && deadlineTime) };
+      const job = templateJob
+        ? await api.templates.createJob(templateJob.id, {
+            ...target,
+            ...schedule,
+            title: title || null,
+            responsibleId,
+            statusId,
+          })
+        : await api.jobs.create({
+            title,
+            ...target,
+            responsibleId,
+            statusId,
+            ...schedule,
+            briefing: briefing.trim() ? textToHtml(briefing) : null,
+          });
       toast.success(`Job ${job.number} criado.`);
       reset();
       setOpen(false);
@@ -131,7 +150,9 @@ export function NewJobDialog({
         <DialogHeader>
           <DialogTitle>Novo job</DialogTitle>
           <DialogDescription>
-            {fixedProject ? `No projeto ${fixedProject.title}.` : 'Sem projeto, o job vai para o projeto Geral do cliente.'}
+            {fixedProject
+              ? `No projeto ${fixedProject.title}.`
+              : 'Sem projeto, o job vai para o projeto Geral do cliente.'}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -143,8 +164,38 @@ export function NewJobDialog({
         >
           <div className="grid gap-2">
             <Label htmlFor="job-title">Título</Label>
-            <Input id="job-title" required maxLength={250} value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input
+              id="job-title"
+              required={!templateJob}
+              maxLength={250}
+              placeholder={templateJob?.title}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </div>
+          {Boolean(templateJobs.data?.length) && (
+            <div className="grid gap-2">
+              <Label>Modelo</Label>
+              <Select value={templateJobId} onValueChange={chooseTemplate}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_TEMPLATE}>Sem modelo</SelectItem>
+                  {templateJobs.data?.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.templateTitle} › {item.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {templateJob && (
+                <p className="text-xs text-muted-foreground">
+                  Briefing e {templateJob.tasks.length} tarefa(s) vêm do modelo.
+                </p>
+              )}
+            </div>
+          )}
           {!fixedClient && (
             <div className="grid gap-2">
               <Label>Cliente</Label>
@@ -190,7 +241,12 @@ export function NewJobDialog({
           <div className="grid gap-2">
             <Label htmlFor="job-deadline">Prazo</Label>
             <div className="flex gap-2">
-              <Input id="job-deadline" type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} />
+              <Input
+                id="job-deadline"
+                type="date"
+                value={deadlineDate}
+                onChange={(e) => setDeadlineDate(e.target.value)}
+              />
               <Input
                 type="time"
                 aria-label="Hora do prazo (opcional)"
@@ -202,7 +258,7 @@ export function NewJobDialog({
             </div>
             <p className="text-xs text-muted-foreground">Sem hora, o prazo vale até o fim do dia.</p>
           </div>
-          <div className="grid gap-2">
+          <div className={templateJob ? 'hidden' : 'grid gap-2'}>
             <Label htmlFor="job-briefing">Briefing</Label>
             <Textarea id="job-briefing" rows={4} value={briefing} onChange={(e) => setBriefing(e.target.value)} />
           </div>

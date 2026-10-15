@@ -65,6 +65,14 @@ export class NamingService {
   }
 
   /** Todos os ids são de usuários ativos. */
+  /** Quais destes usuários existem e estão ativos. */
+  async activeUserIds(userIds: string[]): Promise<Set<string>> {
+    const unique = [...new Set(userIds)];
+    if (unique.length === 0) return new Set();
+    const users = await this.auth.getUsers(unique);
+    return new Set(users.filter((user) => user.active).map((user) => user.id));
+  }
+
   async areActiveUsers(userIds: string[]): Promise<boolean> {
     const unique = [...new Set(userIds)];
     if (unique.length === 0) return true;

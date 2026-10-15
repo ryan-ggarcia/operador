@@ -341,9 +341,24 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      anexos de job e projeto (o componente de anexos recebe extensões por
      arquivo), diálogo com a imagem, marcadores e votos, e o painel
      "Aprovações para você" na pauta de jobs.
+   - Templates e duplicação (15/10/2026, em `projects`): templates de
+     projeto (título, briefing, jobs ordenados com responsável, status,
+     briefing e tarefas); criar e editar exige nível Total em projetos.
+     Projeto novo a partir de template, aplicar template em projeto aberto,
+     job novo a partir de job de template (o que vier no formulário troca
+     o do modelo), incluir as tarefas de um job de template num job, salvar
+     projeto ou job como template. Duplicar job (cliente e projeto de
+     destino; tarefas não canceladas voltam abertas) e duplicar projeto
+     (envolvidos e jobs não cancelados). Responsáveis desativados e status
+     inativos viram vazio na cópia. Tudo passa por `JobsService` e
+     `ProjectsService` (`DocumentCopyService`), com as mesmas validações.
+     Front: `/projetos/templates` (lista e editor), template no "Novo
+     projeto", modelo no "Novo job" e menu ⋮ no projeto e no job.
+     Pendente: duplicar mídias e produções junto com o projeto; dependência
+     entre tarefas (workflow) nos templates.
    Falta (a integração com o Claude, módulo `ai`, fica por último, a pedido
    do usuário em 15/10/2026):
-   templates, recorrência, duplicar projeto; `docker-compose.yml`, Dockerfiles e
+   recorrência de jobs; `docker-compose.yml`, Dockerfiles e
    deploy. O Docker não está instalado na máquina do usuário.
 5. Engenharia reversa de faturamento (14/10/2026): resultados em
    `docs/operand/midia.md` (2.8) e `producao.md` (2.9); registro técnico em

@@ -7,6 +7,7 @@ import { SettingsModule } from '../settings/public/index.js';
 import { ApprovalsController } from './approvals/approvals.controller.js';
 import { ApprovalsService } from './approvals/approvals.service.js';
 import { CommentsService } from './comments/comments.service.js';
+import { DocumentCopyService } from './copy/document-copy.service.js';
 import { DocumentAccessService } from './document-access.service.js';
 import { DocumentLifecycleService } from './document-lifecycle.service.js';
 import { JobsController, TasksController } from './jobs/jobs.controller.js';
@@ -26,6 +27,8 @@ import {
   PrismaStatusRepository,
 } from './repositories/prisma-status.repository.js';
 import { PROJECT_REPOSITORY } from './repositories/project.repository.js';
+import { PrismaTemplateRepository } from './repositories/prisma-template.repository.js';
+import { TEMPLATE_REPOSITORY } from './repositories/template.repository.js';
 import {
   COMMENT_REPOSITORY,
   STATUS_REPOSITORY,
@@ -36,6 +39,8 @@ import {
   StatusesController,
 } from './statuses/statuses.controller.js';
 import { StatusesService } from './statuses/statuses.service.js';
+import { CopiesController, TemplatesController } from './templates/templates.controller.js';
+import { TemplatesService } from './templates/templates.service.js';
 import { ProjectsFileOwner } from './projects-file-owner.js';
 import { ProjectsNotifier } from './projects-notifier.js';
 
@@ -49,6 +54,8 @@ import { ProjectsNotifier } from './projects-notifier.js';
     BriefingsController,
     CommentsController,
     ApprovalsController,
+    TemplatesController,
+    CopiesController,
   ],
   providers: [
     ProjectsFileOwner,
@@ -59,6 +66,8 @@ import { ProjectsNotifier } from './projects-notifier.js';
     CommentsService,
     DocumentAccessService,
     ApprovalsService,
+    TemplatesService,
+    DocumentCopyService,
     NamingService,
     DocumentLifecycleService,
     { provide: PROJECT_REPOSITORY, useClass: PrismaProjectRepository },
@@ -66,6 +75,7 @@ import { ProjectsNotifier } from './projects-notifier.js';
     { provide: STATUS_REPOSITORY, useClass: PrismaStatusRepository },
     { provide: COMMENT_REPOSITORY, useClass: PrismaCommentRepository },
     { provide: APPROVAL_REPOSITORY, useClass: PrismaApprovalRepository },
+    { provide: TEMPLATE_REPOSITORY, useClass: PrismaTemplateRepository },
     { provide: PROJECTS_FACADE, useClass: ProjectsFacadeService },
   ],
   exports: [PROJECTS_FACADE],

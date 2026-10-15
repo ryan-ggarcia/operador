@@ -20,6 +20,7 @@ import {
 import { StatusSelect, UserSelect } from '@/components/pickers';
 import { useReferenceData } from '@/components/reference-data';
 import { DocumentTimesheet } from '@/components/timesheet/document-timesheet';
+import { JobCopyMenu } from '@/components/templates/copy-menus';
 import { StartTimerButton } from '@/components/timesheet/timer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -278,6 +279,7 @@ export default function JobPage() {
         }
         actions={
           <>
+            <JobCopyMenu job={data} onChanged={() => void job.reload()} />
             {data.situation === 'OPEN' && data.project.situation === 'OPEN' && (
               <StartTimerButton docType="job" docId={data.id} />
             )}

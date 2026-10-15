@@ -18,6 +18,7 @@ import {
   UserList,
 } from '@/components/common';
 import { JobsTable } from '@/components/jobs/jobs-table';
+import { ProjectCopyMenu } from '@/components/templates/copy-menus';
 import { NewJobDialog } from '@/components/jobs/new-job-dialog';
 import { StatusSelect, UserSelect } from '@/components/pickers';
 import { useReferenceData } from '@/components/reference-data';
@@ -145,6 +146,7 @@ export default function ProjectPage() {
         description={data.client?.name}
         actions={
           <>
+            <ProjectCopyMenu project={data} onChanged={() => void Promise.all([project.reload(), jobs.reload()])} />
             <Button
               variant="ghost"
               size="icon"

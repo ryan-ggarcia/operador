@@ -38,6 +38,8 @@ const SITUATIONS: Record<string, ProjectSituation[] | undefined> = {
   all: undefined,
 };
 
+const NO_TEMPLATE = '__none__';
+
 function NewProjectDialog({ onCreated }: { onCreated: () => void }) {
   const router = useRouter();
   const { permissions } = useAuth();
@@ -46,7 +48,10 @@ function NewProjectDialog({ onCreated }: { onCreated: () => void }) {
   const [client, setClient] = useState<NamedRef | null>(null);
   const [description, setDescription] = useState('');
   const [hidden, setHidden] = useState(false);
+  const [templateId, setTemplateId] = useState(NO_TEMPLATE);
   const [saving, setSaving] = useState(false);
+  const templates = useResource(() => (open ? api.templates.list() : Promise.resolve([])), [open]);
+  const template = templates.data?.find((item) => item.id === templateId);
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -56,18 +61,21 @@ function NewProjectDialog({ onCreated }: { onCreated: () => void }) {
     }
     setSaving(true);
     try {
-      const project = await api.projects.create({
-        title,
-        clientId: client.id,
-        description: description.trim() ? textToHtml(description) : null,
-        hidden,
-      });
+      const project = template
+        ? await api.templates.createProject(template.id, { clientId: client.id, title: title || null, hidden })
+        : await api.projects.create({
+            title,
+            clientId: client.id,
+            description: description.trim() ? textToHtml(description) : null,
+            hidden,
+          });
       toast.success(`Projeto ${project.number} criado.`);
       setOpen(false);
       setTitle('');
       setClient(null);
       setDescription('');
       setHidden(false);
+      setTemplateId(NO_TEMPLATE);
       onCreated();
       router.push(`/projetos/${project.id}`);
     } catch (caught) {
@@ -93,17 +101,41 @@ function NewProjectDialog({ onCreated }: { onCreated: () => void }) {
             <Label htmlFor="project-title">Título</Label>
             <Input
               id="project-title"
-              required
+              required={!template}
               maxLength={250}
+              placeholder={template?.title}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
+          {Boolean(templates.data?.length) && (
+            <div className="grid gap-2">
+              <Label>Template</Label>
+              <Select value={templateId} onValueChange={setTemplateId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_TEMPLATE}>Sem template</SelectItem>
+                  {templates.data?.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.title} ({item.jobsCount} jobs)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {template && (
+                <p className="text-xs text-muted-foreground">
+                  Título (se ficar vazio), briefing, jobs e tarefas vêm do template.
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid gap-2">
             <Label>Cliente</Label>
             <PartyPicker role="client" value={client} onChange={setClient} placeholder="Escolha o cliente" />
           </div>
-          <div className="grid gap-2">
+          <div className={template ? 'hidden' : 'grid gap-2'}>
             <Label htmlFor="project-description">Descrição (briefing)</Label>
             <Textarea
               id="project-description"
@@ -147,7 +179,14 @@ export default function ProjectsPage() {
     <>
       <PageHeader
         title="Projetos"
-        actions={can('projects') && <NewProjectDialog onCreated={() => void projects.reload()} />}
+        actions={
+          <>
+            <Button variant="outline" asChild>
+              <Link href="/projetos/templates">Templates</Link>
+            </Button>
+            {can('projects') && <NewProjectDialog onCreated={() => void projects.reload()} />}
+          </>
+        }
       />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <form

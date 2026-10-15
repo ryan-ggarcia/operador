@@ -9,6 +9,7 @@ import { MediaService } from './media.service';
 import { NotificationsService } from './notifications.service';
 import { PartiesService, SettingsService } from './parties.service';
 import { ProductionService } from './production.service';
+import { TemplatesService } from './templates.service';
 import { CommentsService, JobsService, ProjectsService, StatusesService } from './projects.service';
 import { TimesheetService } from './timesheet.service';
 
@@ -35,4 +36,5 @@ export const api = {
   files: new FilesService(http),
   notifications: new NotificationsService(http),
   approvals: new ApprovalsService(http),
+  templates: new TemplatesService(http),
 };
