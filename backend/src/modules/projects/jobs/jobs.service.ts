@@ -47,6 +47,7 @@ import {
   type ProjectRepository,
 } from '../repositories/project.repository.js';
 import { STATUS_REPOSITORY, type StatusRepository } from '../repositories/status.repository.js';
+import { jobTarget, ProjectsNotifier } from '../projects-notifier.js';
 
 export interface JobListQuery {
   search?: string;
@@ -162,6 +163,7 @@ export class JobsService {
     @Inject(SETTINGS_FACADE) private readonly settings: SettingsFacade,
     private readonly naming: NamingService,
     private readonly lifecycle: DocumentLifecycleService,
+    private readonly notifier: ProjectsNotifier,
   ) {}
 
   async list(userId: string, access: UserPermissions, query: JobListQuery): Promise<Page<JobView>> {
@@ -249,6 +251,7 @@ export class JobsService {
       },
       userId,
     );
+    await this.notifier.involved(jobTarget(job), [job.responsibleId, ...job.memberIds], userId);
     return this.get(userId, access, job.id);
   }
 
@@ -282,6 +285,10 @@ export class JobsService {
     if (changes.statusId) await this.requireStatus(changes.statusId);
 
     await this.jobs.update(id, changes, userId, diffFields(job, changes, HISTORY_FIELDS));
+    if (changes.responsibleId && changes.responsibleId !== job.responsibleId) {
+      const target = jobTarget({ ...job, title: changes.title ?? job.title });
+      await this.notifier.involved(target, [changes.responsibleId], userId);
+    }
     return this.get(userId, access, id);
   }
 
@@ -302,6 +309,10 @@ export class JobsService {
       await this.lifecycle.beforeClose({ jobIds: [id], taskIds: tasks.map((task) => task.id) });
     }
     await this.jobs.changeSituation(id, next, userId);
+    if (next === 'DONE') await this.notifier.completed(jobTarget(job), job.responsibleId, userId);
+    if (next === 'OPEN') {
+      await this.notifier.reopened(jobTarget(job), [job.responsibleId, job.requesterId, ...job.memberIds], userId);
+    }
     return this.get(userId, access, id);
   }
 
@@ -316,11 +327,13 @@ export class JobsService {
   }
 
   async addMembers(userId: string, access: UserPermissions, id: string, userIds: string[]): Promise<JobView> {
-    await this.requireEditable(userId, access, id);
+    const job = await this.requireEditable(userId, access, id);
     if (!(await this.naming.areActiveUsers(userIds))) {
       throw new BadRequestException('Usuário não encontrado ou inativo.');
     }
     await this.jobs.addMembers(id, [...new Set(userIds)]);
+    const added = userIds.filter((member) => !job.memberIds.includes(member) && member !== job.responsibleId);
+    await this.notifier.involved(jobTarget(job), added, userId);
     return this.get(userId, access, id);
   }
 

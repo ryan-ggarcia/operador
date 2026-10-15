@@ -316,8 +316,20 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      produção, nos cards da mídia e do cadastro e num diálogo por lançamento
      no financeiro. Pendente: logo da agência (para os PDFs), reordenar
      arrastando e aprovação de peças.
+   - `notifications` (15/10/2026): avisos no sistema (sem e-mail, que é
+     extra). Fachada só de ação: `notify({ event, userIds, actorId, action,
+     target })`; monta a frase com o nome de quem agiu, tira o autor e quem
+     desligou o evento, aceita só links internos e nunca lança (um aviso que
+     falha não desfaz a ação). Eventos da v1: fui mencionado; comentaram em
+     documento de que sou responsável; fui envolvido (responsável ou membro,
+     em projeto, job, mídia e produção); concluíram (ou arquivaram) algo de
+     que sou responsável; reabriram algo em que estou envolvido. Em
+     `projects`, os textos ficam em `ProjectsNotifier`. Front: sino no
+     cabeçalho (contador a cada minuto e ao voltar à aba, lista, marcar
+     lidos) e preferências em "Notificações" no menu do usuário.
+     Pendente: aprovação de peças (eventos próprios), avisos do financeiro.
    Falta:
-   `notifications` (menções), `ai`; templates, recorrência,
+   `ai`; templates, recorrência,
    duplicar projeto, aprovação de peças; `docker-compose.yml`, Dockerfiles e
    deploy. O Docker não está instalado na máquina do usuário.
 5. Engenharia reversa de faturamento (14/10/2026): resultados em

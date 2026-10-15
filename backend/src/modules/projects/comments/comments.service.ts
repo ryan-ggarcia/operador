@@ -17,6 +17,7 @@ import {
   type CommentRepository,
   type ProjectDocType,
 } from '../repositories/status.repository.js';
+import { jobTarget, projectTarget, ProjectsNotifier, type NotifiedDocument } from '../projects-notifier.js';
 
 export interface CommentInput {
   html: string;
@@ -28,6 +29,8 @@ export interface CommentInput {
 interface CommentTarget {
   involvedUserIds: string[];
   canModerate: boolean;
+  responsibleId: string | null;
+  document: NotifiedDocument;
 }
 
 /**
@@ -40,6 +43,7 @@ export class CommentsService {
     @Inject(COMMENT_REPOSITORY) private readonly comments: CommentRepository,
     private readonly projects: ProjectsService,
     private readonly jobs: JobsService,
+    private readonly notifier: ProjectsNotifier,
   ) {}
 
   async list(userId: string, access: UserPermissions, docType: ProjectDocType, docId: string): Promise<CommentRecord[]> {
@@ -64,8 +68,7 @@ export class CommentsService {
         throw new BadRequestException('Comentário respondido não encontrado.');
       }
     }
-    // TODO(notifications): avisar os mencionados.
-    return this.comments.create({
+    const comment = await this.comments.create({
       docType,
       docId,
       authorId: userId,
@@ -74,6 +77,9 @@ export class CommentsService {
       parentId: input.parentId ?? null,
       fileId: input.fileId ?? null,
     });
+    const people = { mentionedIds: mentioned, responsibleId: target.responsibleId };
+    await this.notifier.commented(target.document, people, userId);
+    return comment;
   }
 
   async update(
@@ -136,6 +142,8 @@ export class CommentsService {
           (id): id is string => Boolean(id),
         ),
         canModerate: canEditProject(userId, access, project),
+        responsibleId: project.responsibleId,
+        document: projectTarget(project),
       };
     }
     const job = await this.jobs.requireViewable(userId, access, docId);
@@ -151,6 +159,8 @@ export class CommentsService {
         projectHidden: job.projectHidden,
         involvedInProject: job.projectInvolvedIds.includes(userId),
       }),
+      responsibleId: job.responsibleId,
+      document: jobTarget(job),
     };
   }
 }

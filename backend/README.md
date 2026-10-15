@@ -73,4 +73,5 @@ próprios, projeto oculto etc.).
 | `finance` | `/finance/bills` (lançamentos, `settle`, `cancel`, `reopen`), `/finance/summary`, `/finance/transfers`, `/finance/accounts`, `/finance/categories`, `/finance-settings/*` |
 | `production` | `/productions` (itens, fornecedores, cotações, `approve`, pedidos, `send-to-finance`, `reopen-billing`), `/production-settings/*` (encargos, status, textos) |
 | `files` | `/files` (listar e enviar, multipart), `/files/:id` (descrição, excluir), `/files/:id/url`, `/files/usage`, `/files/content/:token` (download do storage local) |
+| `notifications` | `/notifications` (lista do usuário), `/notifications/unread-count`, `/notifications/read`, `/notifications/preferences` |
 | — | `/health` |

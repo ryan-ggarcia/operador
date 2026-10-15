@@ -34,6 +34,7 @@ import {
   type ProjectRepository,
 } from '../repositories/project.repository.js';
 import { STATUS_REPOSITORY, type StatusRepository } from '../repositories/status.repository.js';
+import { projectTarget, ProjectsNotifier } from '../projects-notifier.js';
 
 export interface ProjectListQuery {
   search?: string;
@@ -110,6 +111,7 @@ export class ProjectsService {
     @Inject(STATUS_REPOSITORY) private readonly statuses: StatusRepository,
     private readonly naming: NamingService,
     private readonly lifecycle: DocumentLifecycleService,
+    private readonly notifier: ProjectsNotifier,
   ) {}
 
   async list(userId: string, access: UserPermissions, query: ProjectListQuery): Promise<Page<ProjectView>> {
@@ -221,6 +223,10 @@ export class ProjectsService {
     }
 
     await this.projects.update(id, data, userId, diffFields(project, data, HISTORY_FIELDS));
+    if (data.responsibleId && data.responsibleId !== project.responsibleId) {
+      const target = projectTarget({ ...project, title: data.title ?? project.title });
+      await this.notifier.involved(target, [data.responsibleId], userId);
+    }
     return this.get(userId, access, id);
   }
 
@@ -267,15 +273,24 @@ export class ProjectsService {
     if (next !== 'OPEN') {
       await this.lifecycle.afterProjectClosed(id, userId, next === 'ARCHIVED' ? 'archived' : 'canceled');
     }
+    if (next === 'ARCHIVED') {
+      await this.notifier.completed(projectTarget(project), project.responsibleId, userId, 'arquivou');
+    }
+    if (next === 'OPEN') {
+      const involved = [project.responsibleId, project.requesterId, ...project.memberIds];
+      await this.notifier.reopened(projectTarget(project), involved, userId);
+    }
     return this.get(userId, access, id);
   }
 
   async addMembers(userId: string, access: UserPermissions, id: string, userIds: string[]): Promise<ProjectView> {
-    await this.requireEditable(userId, access, id);
+    const project = await this.requireEditable(userId, access, id);
     if (!(await this.naming.areActiveUsers(userIds))) {
       throw new BadRequestException('Usuário não encontrado ou inativo.');
     }
     await this.projects.addMembers(id, [...new Set(userIds)]);
+    const added = userIds.filter((member) => !project.memberIds.includes(member) && member !== project.responsibleId);
+    await this.notifier.involved(projectTarget(project), added, userId);
     return this.get(userId, access, id);
   }
 

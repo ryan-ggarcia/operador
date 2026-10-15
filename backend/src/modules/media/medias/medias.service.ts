@@ -13,6 +13,7 @@ import type { Page } from '../../../shared/validation/pagination.js';
 import { AUTH_FACADE, READ_ALL, type AuthFacade, type UserPermissions } from '../../auth/public/index.js';
 import { CRM_FACADE, type CrmFacade } from '../../crm/public/index.js';
 import { FINANCE_FACADE, type FinanceFacade, type SourceBill } from '../../finance/public/index.js';
+import { NOTIFICATIONS_FACADE, type NotificationsFacade } from '../../notifications/public/index.js';
 import { PROJECTS_FACADE, type ProjectsFacade } from '../../projects/public/index.js';
 import { SETTINGS_FACADE, type SettingsFacade } from '../../settings/public/index.js';
 import {
@@ -180,6 +181,7 @@ export class MediasService {
     @Inject(AUTH_FACADE) private readonly auth: AuthFacade,
     @Inject(SETTINGS_FACADE) private readonly settings: SettingsFacade,
     @Inject(FINANCE_FACADE) private readonly finance: FinanceFacade,
+    @Inject(NOTIFICATIONS_FACADE) private readonly notifications: NotificationsFacade,
   ) {}
 
   async list(userId: string, access: UserPermissions, query: MediaListQuery): Promise<Page<MediaListView>> {
@@ -278,7 +280,9 @@ export class MediasService {
       },
       userId,
     );
-    return this.get(userId, access, media.id);
+    const view = await this.get(userId, access, media.id);
+    await this.notifyInvolved(view, [view.responsible?.id ?? null], userId);
+    return view;
   }
 
   /**
@@ -434,14 +438,27 @@ export class MediasService {
   }
 
   async addMembers(userId: string, access: UserPermissions, id: string, userIds: string[]): Promise<MediaView> {
-    await this.requireEditable(userId, access, id);
+    const current = await this.requireEditable(userId, access, id);
     const unique = [...new Set(userIds)];
     const users = await this.auth.getUsers(unique);
     if (users.length !== unique.length || users.some((user) => !user.active)) {
       throw new BadRequestException('Usuário não encontrado ou inativo.');
     }
     await this.medias.addMembers(id, unique);
-    return this.get(userId, access, id);
+    const view = await this.get(userId, access, id);
+    const added = unique.filter((member) => !current.memberIds.includes(member) && member !== current.responsibleId);
+    await this.notifyInvolved(view, added, userId);
+    return view;
+  }
+
+  private notifyInvolved(view: MediaView, userIds: (string | null)[], actorId: string): Promise<void> {
+    return this.notifications.notify({
+      event: 'document.involved',
+      userIds: userIds.filter((id): id is string => Boolean(id)),
+      actorId,
+      action: 'envolveu você em',
+      target: { label: `${view.number} ${view.title}`, link: `/midia/${view.id}` },
+    });
   }
 
   async removeMember(userId: string, access: UserPermissions, id: string, memberId: string): Promise<MediaView> {

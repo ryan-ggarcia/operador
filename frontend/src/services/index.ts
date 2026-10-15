@@ -5,6 +5,7 @@ import { FilesService } from './files.service';
 import { HttpClient, LocalTokenStore } from './http';
 import { FinanceService } from './finance.service';
 import { MediaService } from './media.service';
+import { NotificationsService } from './notifications.service';
 import { PartiesService, SettingsService } from './parties.service';
 import { ProductionService } from './production.service';
 import { CommentsService, JobsService, ProjectsService, StatusesService } from './projects.service';
@@ -31,4 +32,5 @@ export const api = {
   finance: new FinanceService(http),
   production: new ProductionService(http),
   files: new FilesService(http),
+  notifications: new NotificationsService(http),
 };

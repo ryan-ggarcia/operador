@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/public/index.js';
 import { FilesModule } from '../files/public/index.js';
+import { NotificationsModule } from '../notifications/public/index.js';
 import { CrmModule } from '../crm/public/index.js';
 import { FinanceModule } from '../finance/public/index.js';
 import { ProjectsModule } from '../projects/public/index.js';
@@ -19,7 +20,7 @@ import { PRODUCTION_CATALOG_REPOSITORY, PRODUCTION_REPOSITORY } from './reposito
 import { ProductionFileOwner } from './production-file-owner.js';
 
 @Module({
-  imports: [AuthModule, FilesModule, CrmModule, ProjectsModule, SettingsModule, FinanceModule],
+  imports: [AuthModule, FilesModule, NotificationsModule, CrmModule, ProjectsModule, SettingsModule, FinanceModule],
   controllers: [ProductionsController, ProductionSettingsController],
   providers: [
     ProductionFileOwner,

@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Bell,
   BriefcaseBusiness,
   FolderKanban,
   KeyRound,
@@ -19,6 +20,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Loading } from '@/components/common';
+import { NotificationPreferencesDialog, NotificationsBell } from '@/components/notifications';
 import { ReferenceDataProvider } from '@/components/reference-data';
 import { TimerProvider, TimerWidget } from '@/components/timesheet/timer';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -116,6 +118,7 @@ function Brand() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
 
   if (loading || !user || user.mustChangePassword) {
     return (
@@ -154,6 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Sheet>
               <div className="flex-1" />
               <TimerWidget />
+              <NotificationsBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 px-2">
@@ -169,6 +173,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <div className="text-xs text-muted-foreground">{user.email}</div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setPreferencesOpen(true)}>
+                    <Bell /> Notificações
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/trocar-senha">
                       <KeyRound /> Trocar senha
@@ -188,6 +195,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </header>
+            <NotificationPreferencesDialog open={preferencesOpen} onOpenChange={setPreferencesOpen} />
             <main className="flex-1 px-4 py-6 md:px-8">{children}</main>
           </div>
         </div>
