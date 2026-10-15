@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/public/index.js';
+import { FilesModule } from '../files/public/index.js';
 import { CrmModule } from '../crm/public/index.js';
 import { FinanceModule } from '../finance/public/index.js';
 import { ProjectsModule } from '../projects/public/index.js';
@@ -14,11 +15,13 @@ import { MEDIA_FACADE } from './public/media.facade.js';
 import { MEDIA_CATALOG_REPOSITORY, MEDIA_REPOSITORY } from './repositories/media.repository.js';
 import { PrismaMediaCatalogRepository } from './repositories/prisma-media-catalog.repository.js';
 import { PrismaMediaRepository } from './repositories/prisma-media.repository.js';
+import { MediaFileOwner } from './media-file-owner.js';
 
 @Module({
-  imports: [AuthModule, CrmModule, ProjectsModule, SettingsModule, FinanceModule],
+  imports: [AuthModule, FilesModule, CrmModule, ProjectsModule, SettingsModule, FinanceModule],
   controllers: [MediasController, MediaCatalogController],
   providers: [
+    MediaFileOwner,
     MediasService,
     MediaCatalogService,
     MediaLifecycleListener,

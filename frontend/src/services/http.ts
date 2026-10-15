@@ -85,18 +85,27 @@ export class HttpClient {
   delete<T>(path: string) {
     return this.request<T>('DELETE', path, {});
   }
+  /** Envio multipart (anexos): o navegador monta o content-type com o boundary. */
+  upload<T>(path: string, form: FormData) {
+    return this.request<T>('POST', path, { body: form });
+  }
 
   async request<T>(method: string, path: string, options: RequestOptions, retry = true): Promise<T> {
     const token = options.anonymous ? null : this.tokens.get()?.accessToken;
+    const isForm = options.body instanceof FormData;
     let response: Response;
     try {
       response = await fetch(this.baseUrl + path + buildQuery(options.query), {
         method,
         headers: {
-          ...(options.body === undefined ? {} : { 'content-type': 'application/json' }),
+          ...(options.body === undefined || isForm ? {} : { 'content-type': 'application/json' }),
           ...(token ? { authorization: `Bearer ${token}` } : {}),
         },
-        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        body: isForm
+          ? (options.body as FormData)
+          : options.body === undefined
+            ? undefined
+            : JSON.stringify(options.body),
       });
     } catch {
       throw new ApiError(0, 'Sem conexão com o servidor.');

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/public/index.js';
+import { FilesModule } from '../files/public/index.js';
 import { CrmModule } from '../crm/public/index.js';
 import { FinanceModule } from '../finance/public/index.js';
 import { ProjectsModule } from '../projects/public/index.js';
@@ -15,11 +16,13 @@ import {
   PrismaProductionRepository,
 } from './repositories/prisma-production.repository.js';
 import { PRODUCTION_CATALOG_REPOSITORY, PRODUCTION_REPOSITORY } from './repositories/production.repository.js';
+import { ProductionFileOwner } from './production-file-owner.js';
 
 @Module({
-  imports: [AuthModule, CrmModule, ProjectsModule, SettingsModule, FinanceModule],
+  imports: [AuthModule, FilesModule, CrmModule, ProjectsModule, SettingsModule, FinanceModule],
   controllers: [ProductionsController, ProductionSettingsController],
   providers: [
+    ProductionFileOwner,
     ProductionsService,
     ProductionCatalogService,
     ProductionLifecycleListener,

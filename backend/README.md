@@ -47,7 +47,13 @@ src/modules/<modulo>/
 Quando um módulo precisa reagir a outro que depende dele (ex.: `projects`
 perguntar ao `timesheet` se há cronômetro ativo), o módulo de baixo expõe um
 gancho na fachada (`registerLifecycleListener`) e o de cima se registra no
-`onModuleInit`. Assim não há dependência circular.
+`onModuleInit`. Assim não há dependência circular. Os anexos seguem a mesma
+ideia: cada módulo dono de documentos registra no `files` um resolvedor
+(`registerOwner`) que diz quem vê e quem altera os anexos.
+
+Anexos: com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`, vão para o Supabase
+Storage (bucket privado, `SUPABASE_BUCKET`, padrão `anexos`, criado no painel
+do Supabase); sem, ficam em `backend/storage` (desenvolvimento).
 
 Permissões: `@RequireAccess('jobs', nível)`, `@RequireAdministrator()` ou
 `@LoadAccess()` (de `modules/auth/public`) carregam as permissões do usuário;
@@ -66,4 +72,5 @@ próprios, projeto oculto etc.).
 | `media` | `/medias` (peças, grades, linhas, situação, envolvidos, `send-to-finance`, `reopen-billing`), `/medias/billing-types`, `/media-settings/*` (redes, praças, programas, métricas de custo, status) |
 | `finance` | `/finance/bills` (lançamentos, `settle`, `cancel`, `reopen`), `/finance/summary`, `/finance/transfers`, `/finance/accounts`, `/finance/categories`, `/finance-settings/*` |
 | `production` | `/productions` (itens, fornecedores, cotações, `approve`, pedidos, `send-to-finance`, `reopen-billing`), `/production-settings/*` (encargos, status, textos) |
+| `files` | `/files` (listar e enviar, multipart), `/files/:id` (descrição, excluir), `/files/:id/url`, `/files/usage`, `/files/content/:token` (download do storage local) |
 | — | `/health` |

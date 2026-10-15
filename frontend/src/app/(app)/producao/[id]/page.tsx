@@ -14,6 +14,7 @@ import {
   UserAvatar,
   UserList,
 } from '@/components/common';
+import { Attachments } from '@/components/attachments';
 import { ItemCard, ItemForm } from '@/components/production/item-card';
 import { OrderCard } from '@/components/production/order-card';
 import { Button } from '@/components/ui/button';
@@ -256,6 +257,7 @@ export default function ProductionPage() {
             <TabsTrigger value="quote">Cotação ({items.length})</TabsTrigger>
             <TabsTrigger value="orders">Pedidos ({orders.length})</TabsTrigger>
             <TabsTrigger value="general">Dados gerais</TabsTrigger>
+            <TabsTrigger value="files">Anexos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="quote" className="flex flex-col gap-4">
@@ -303,6 +305,13 @@ export default function ProductionPage() {
                   statuses={statuses.data ?? []}
                   onSaved={production.setData}
                 />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="files">
+            <Card>
+              <CardContent>
+                <Attachments ownerType="production" ownerId={data.id} />
               </CardContent>
             </Card>
           </TabsContent>

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/public/index.js';
+import { FilesModule } from '../files/public/index.js';
 import { CrmModule } from '../crm/public/index.js';
 import { ProjectsModule } from '../projects/public/index.js';
 import { SettingsModule } from '../settings/public/index.js';
@@ -12,11 +13,13 @@ import { FINANCE_FACADE } from './public/finance.facade.js';
 import { BILL_REPOSITORY, FINANCE_CATALOG_REPOSITORY } from './repositories/finance.repository.js';
 import { PrismaBillRepository } from './repositories/prisma-bill.repository.js';
 import { PrismaFinanceCatalogRepository } from './repositories/prisma-finance-catalog.repository.js';
+import { FinanceFileOwner } from './finance-file-owner.js';
 
 @Module({
-  imports: [AuthModule, CrmModule, ProjectsModule, SettingsModule],
+  imports: [AuthModule, FilesModule, CrmModule, ProjectsModule, SettingsModule],
   controllers: [FinanceController, FinanceSettingsController],
   providers: [
+    FinanceFileOwner,
     BillsService,
     TreasuryService,
     FinanceLifecycleListener,

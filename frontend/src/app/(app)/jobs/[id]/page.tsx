@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Attachments } from '@/components/attachments';
 import { Comments } from '@/components/comments';
 import {
   ErrorMessage,
@@ -334,6 +335,7 @@ export default function JobPage() {
               <TabsTrigger value="tasks">Tarefas ({data.totalTasks})</TabsTrigger>
               <TabsTrigger value="timesheet">Timesheet</TabsTrigger>
               <TabsTrigger value="comments">Comentários</TabsTrigger>
+              <TabsTrigger value="files">Anexos</TabsTrigger>
               <TabsTrigger value="history">Histórico</TabsTrigger>
             </TabsList>
             <TabsContent value="tasks" className="pt-3">
@@ -344,6 +346,9 @@ export default function JobPage() {
             </TabsContent>
             <TabsContent value="comments" className="pt-3">
               <Comments docType="JOB" docId={data.id} />
+            </TabsContent>
+            <TabsContent value="files" className="pt-3">
+              <Attachments ownerType="job" ownerId={data.id} />
             </TabsContent>
             <TabsContent value="history" className="pt-3">
               <History jobId={data.id} />

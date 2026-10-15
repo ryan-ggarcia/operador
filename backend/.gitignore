@@ -6,3 +6,6 @@ node_modules
 /dist
 /coverage
 *.tsbuildinfo
+
+# Anexos do storage local (desenvolvimento)
+/storage

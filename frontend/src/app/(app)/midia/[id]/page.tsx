@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Attachments } from '@/components/attachments';
 import { ErrorMessage, Loading, PageHeader, SituationBadge, UserAvatar, UserList } from '@/components/common';
 import { MediaGridCard } from '@/components/media/media-grid';
 import { MediaTerms } from '@/components/media/media-terms';
@@ -234,6 +235,14 @@ export default function MediaPage() {
             </CardHeader>
             <CardContent>
               <Pieces media={data} onChange={media.setData} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Anexos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Attachments ownerType="media" ownerId={data.id} />
             </CardContent>
           </Card>
           <Card>

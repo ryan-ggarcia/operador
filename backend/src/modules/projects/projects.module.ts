@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/public/index.js';
+import { FilesModule } from '../files/public/index.js';
 import { CrmModule } from '../crm/public/index.js';
 import { SettingsModule } from '../settings/public/index.js';
 import { CommentsService } from './comments/comments.service.js';
@@ -29,9 +30,10 @@ import {
   StatusesController,
 } from './statuses/statuses.controller.js';
 import { StatusesService } from './statuses/statuses.service.js';
+import { ProjectsFileOwner } from './projects-file-owner.js';
 
 @Module({
-  imports: [AuthModule, CrmModule, SettingsModule],
+  imports: [AuthModule, FilesModule, CrmModule, SettingsModule],
   controllers: [
     ProjectsController,
     JobsController,
@@ -41,6 +43,7 @@ import { StatusesService } from './statuses/statuses.service.js';
     CommentsController,
   ],
   providers: [
+    ProjectsFileOwner,
     ProjectsService,
     JobsService,
     StatusesService,

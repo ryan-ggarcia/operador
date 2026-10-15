@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/public/index.js';
 import { CrmModule } from './modules/crm/public/index.js';
+import { FilesModule } from './modules/files/public/index.js';
 import { FinanceModule } from './modules/finance/public/index.js';
 import { MediaModule } from './modules/media/public/index.js';
 import { ProductionModule } from './modules/production/public/index.js';
@@ -18,6 +19,7 @@ import { PrismaModule } from './shared/prisma/prisma.module.js';
     PrismaModule,
     SharedAuthModule,
     AuthModule,
+    FilesModule,
     CrmModule,
     SettingsModule,
     ProjectsModule,

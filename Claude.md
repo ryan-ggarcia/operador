@@ -302,8 +302,22 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      em `{ ...atual, ...entrada }`.
      Pendente na produção: PDFs (orçamento e PP), textos padrão no front,
      tela de configurações (encargos, status, textos).
+   - `files` (15/10/2026): anexos de projetos, jobs, tarefas, mídias,
+     produções, cadastros e lançamentos. Cada módulo dono registra um
+     resolvedor na fachada de `files` (`registerOwner`, em `onModuleInit`)
+     dizendo quem vê e quem altera os anexos dos seus documentos; `files` não
+     conhece as regras dos outros. Storage trocável (`FILE_STORAGE`): com
+     `SUPABASE_URL`, Supabase Storage pela API REST (bucket privado, link
+     assinado de 5 min); sem, pasta local com link assinado por HMAC servido
+     em `/files/content/:token`. Limite por arquivo (`FILES_MAX_MB`, padrão
+     100) e cota opcional (`FILES_QUOTA_GB`); excluir marca inativo e apaga
+     o arquivo do storage. Front: componente `Attachments` (arrastar e
+     soltar, descrição, ver, baixar, excluir) nas abas de job e projeto, na
+     produção, nos cards da mídia e do cadastro e num diálogo por lançamento
+     no financeiro. Pendente: logo da agência (para os PDFs), reordenar
+     arrastando e aprovação de peças.
    Falta:
-   `files`, `notifications` (menções), `ai`; templates, recorrência,
+   `notifications` (menções), `ai`; templates, recorrência,
    duplicar projeto, aprovação de peças; `docker-compose.yml`, Dockerfiles e
    deploy. O Docker não está instalado na máquina do usuário.
 5. Engenharia reversa de faturamento (14/10/2026): resultados em

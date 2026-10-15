@@ -4,6 +4,7 @@ import { Archive, Loader2, Lock, Pencil, RotateCcw, Star, XCircle } from 'lucide
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Attachments } from '@/components/attachments';
 import { Comments } from '@/components/comments';
 import {
   EmptyState,
@@ -248,6 +249,7 @@ export default function ProjectPage() {
               <TabsList>
                 <TabsTrigger value="jobs">Jobs ({jobs.data?.total ?? 0})</TabsTrigger>
                 <TabsTrigger value="comments">Comentários</TabsTrigger>
+                <TabsTrigger value="files">Anexos</TabsTrigger>
               </TabsList>
               {data.situation === 'OPEN' && data.client && (
                 <NewJobDialog
@@ -270,6 +272,9 @@ export default function ProjectPage() {
             </TabsContent>
             <TabsContent value="comments" className="pt-3">
               <Comments docType="PROJECT" docId={data.id} />
+            </TabsContent>
+            <TabsContent value="files" className="pt-3">
+              <Attachments ownerType="project" ownerId={data.id} />
             </TabsContent>
           </Tabs>
         </div>

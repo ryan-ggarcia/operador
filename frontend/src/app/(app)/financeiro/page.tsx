@@ -1,15 +1,27 @@
 'use client';
 
-import { ArrowLeftRight, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Trash2, XCircle } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Paperclip,
+  Plus,
+  RotateCcw,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Attachments } from '@/components/attachments';
 import { useAuth } from '@/components/auth/auth-provider';
 import { EmptyState, ErrorMessage, Loading, PageHeader } from '@/components/common';
 import { BillDialog, TransferDialog } from '@/components/finance/bill-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +30,20 @@ import { formatDay, formatMoney, toLocalDateInput } from '@/lib/format';
 import { api } from '@/services';
 import { categoryLabel, type Bill, type BillKind } from '@/services/finance.service';
 
-const MONTHS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const MONTHS = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+];
 
 /** Primeiro dia do mês (AAAA-MM-01) somando meses. */
 function monthStart(base: string, offset: number): string {
@@ -52,10 +77,18 @@ export default function FinancePage() {
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [dialog, setDialog] = useState<BillKind | 'transfer' | null>(null);
+  const [filesOf, setFilesOf] = useState<Bill | null>(null);
   const next = monthStart(month, 1);
 
   const bills = useResource(
-    () => api.finance.bills({ from: month, to: next, kinds: kind === 'all' ? undefined : [kind], search: query || undefined, limit: 200 }),
+    () =>
+      api.finance.bills({
+        from: month,
+        to: next,
+        kinds: kind === 'all' ? undefined : [kind],
+        search: query || undefined,
+        limit: 200,
+      }),
     [month, kind, query],
   );
   const summary = useResource(() => api.finance.summary(month, next), [month]);
@@ -78,7 +111,10 @@ export default function FinancePage() {
 
   function cancel(bill: Bill) {
     if (bill.installmentCount > 1) {
-      const answer = prompt('Cancelar qual parte do parcelamento?\n1 = só esta parcela\n2 = esta e as próximas em aberto\n3 = todas em aberto', '1');
+      const answer = prompt(
+        'Cancelar qual parte do parcelamento?\n1 = só esta parcela\n2 = esta e as próximas em aberto\n3 = todas em aberto',
+        '1',
+      );
       const scope = answer === '2' ? 'next' : answer === '3' ? 'all' : answer === '1' ? 'this' : null;
       if (scope) void run(() => api.finance.cancel(bill.id, scope), 'Cancelado.');
     } else if (confirm('Cancelar este lançamento?')) {
@@ -204,7 +240,10 @@ export default function FinancePage() {
                     </TableCell>
                     <TableCell className="text-sm">
                       {categories.data?.find((item) => item.id === bill.categoryId)
-                        ? categoryLabel(categories.data.find((item) => item.id === bill.categoryId)!, categories.data)
+                        ? categoryLabel(
+                            categories.data.find((item) => item.id === bill.categoryId)!,
+                            categories.data,
+                          )
                         : bill.categoryName}
                     </TableCell>
                     <TableCell>
@@ -217,7 +256,10 @@ export default function FinancePage() {
                         )}
                       </div>
                       {bill.sourceType === 'MEDIA' && bill.sourceId && (
-                        <Link href={`/midia/${bill.sourceId}`} className="text-xs text-muted-foreground hover:underline">
+                        <Link
+                          href={`/midia/${bill.sourceId}`}
+                          className="text-xs text-muted-foreground hover:underline"
+                        >
                           Gerado pela mídia
                         </Link>
                       )}
@@ -233,30 +275,41 @@ export default function FinancePage() {
                       {formatMoney(bill.finalAmount)}
                     </TableCell>
                     <TableCell>
-                      {bill.can.edit && (
-                        <div className="flex justify-end gap-1">
-                          {bill.situation === 'OPEN' && (
-                            <Button size="xs" variant="outline" onClick={() => settle(bill)}>
-                              Quitar
-                            </Button>
-                          )}
-                          {bill.situation === 'OPEN' && bill.sourceType === 'MANUAL' && (
-                            <Button size="icon-xs" variant="ghost" aria-label="Cancelar" onClick={() => cancel(bill)}>
-                              <XCircle />
-                            </Button>
-                          )}
-                          {bill.situation !== 'OPEN' && (
-                            <Button
-                              size="icon-xs"
-                              variant="ghost"
-                              aria-label="Reabrir"
-                              onClick={() => void run(() => api.finance.reopen(bill.id), 'Reaberto.')}
-                            >
-                              <RotateCcw />
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          aria-label="Anexos"
+                          title="Anexos"
+                          onClick={() => setFilesOf(bill)}
+                        >
+                          <Paperclip />
+                        </Button>
+                        {bill.can.edit && (
+                          <>
+                            {bill.situation === 'OPEN' && (
+                              <Button size="xs" variant="outline" onClick={() => settle(bill)}>
+                                Quitar
+                              </Button>
+                            )}
+                            {bill.situation === 'OPEN' && bill.sourceType === 'MANUAL' && (
+                              <Button size="icon-xs" variant="ghost" aria-label="Cancelar" onClick={() => cancel(bill)}>
+                                <XCircle />
+                              </Button>
+                            )}
+                            {bill.situation !== 'OPEN' && (
+                              <Button
+                                size="icon-xs"
+                                variant="ghost"
+                                aria-label="Reabrir"
+                                onClick={() => void run(() => api.finance.reopen(bill.id), 'Reaberto.')}
+                              >
+                                <RotateCcw />
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -283,7 +336,11 @@ export default function FinancePage() {
                     <TableCell className="w-28 tabular-nums">{formatDay(transfer.date)}</TableCell>
                     <TableCell>
                       {transfer.title}
-                      {transfer.scheduled && <Badge variant="outline" className="ml-2">Agendada</Badge>}
+                      {transfer.scheduled && (
+                        <Badge variant="outline" className="ml-2">
+                          Agendada
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm">
                       {accountName(transfer.fromAccountId)} → {accountName(transfer.toAccountId)}
@@ -324,8 +381,22 @@ export default function FinancePage() {
           onCreated={reload}
         />
       )}
+      <Dialog open={filesOf !== null} onOpenChange={(open) => !open && setFilesOf(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Anexos</DialogTitle>
+            <DialogDescription>{filesOf?.title}: notas, boletos e comprovantes.</DialogDescription>
+          </DialogHeader>
+          {filesOf && <Attachments ownerType="bill" ownerId={filesOf.id} />}
+        </DialogContent>
+      </Dialog>
       {ready && dialog === 'transfer' && (
-        <TransferDialog open onOpenChange={(open) => !open && setDialog(null)} accounts={accounts.data!} onCreated={reload} />
+        <TransferDialog
+          open
+          onOpenChange={(open) => !open && setDialog(null)}
+          accounts={accounts.data!}
+          onCreated={reload}
+        />
       )}
     </>
   );

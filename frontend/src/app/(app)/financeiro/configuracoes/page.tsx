@@ -30,7 +30,17 @@ async function attempt(action: () => Promise<unknown>, success: string): Promise
   }
 }
 
-function CategoryTree({ kind, categories, canEdit, onChange }: { kind: BillKind; categories: Category[]; canEdit: boolean; onChange: () => void }) {
+function CategoryTree({
+  kind,
+  categories,
+  canEdit,
+  onChange,
+}: {
+  kind: BillKind;
+  categories: Category[];
+  canEdit: boolean;
+  onChange: () => void;
+}) {
   const roots = categories.filter((category) => category.kind === kind && !category.parentId);
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState(NONE);
@@ -68,7 +78,13 @@ function CategoryTree({ kind, categories, canEdit, onChange }: { kind: BillKind;
             }
           }}
         >
-          <Input className="w-56" placeholder="Nova categoria" required value={name} onChange={(e) => setName(e.target.value)} />
+          <Input
+            className="w-56"
+            placeholder="Nova categoria"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
           <Select value={parentId} onValueChange={setParentId}>
             <SelectTrigger className="w-48">
               <SelectValue />
@@ -142,11 +158,17 @@ export default function FinanceSettingsPage() {
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">
                           {item.name}
-                          {item.isDefault && <Badge variant="secondary" className="ml-2">Padrão</Badge>}
+                          {item.isDefault && (
+                            <Badge variant="secondary" className="ml-2">
+                              Padrão
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>{item.bank ?? '—'}</TableCell>
                         <TableCell className="text-right tabular-nums">{formatMoney(item.initialBalance)}</TableCell>
-                        <TableCell className="text-right font-medium tabular-nums">{formatMoney(item.balance)}</TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {formatMoney(item.balance)}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -172,9 +194,26 @@ export default function FinanceSettingsPage() {
                     }
                   }}
                 >
-                  <Input className="w-56" placeholder="Nome da conta" required value={account.name} onChange={(e) => setAccount({ ...account, name: e.target.value })} />
-                  <Input className="w-40" placeholder="Banco" value={account.bank} onChange={(e) => setAccount({ ...account, bank: e.target.value })} />
-                  <Input className="w-40" placeholder="Saldo inicial" inputMode="decimal" value={account.initialBalance} onChange={(e) => setAccount({ ...account, initialBalance: e.target.value })} />
+                  <Input
+                    className="w-56"
+                    placeholder="Nome da conta"
+                    required
+                    value={account.name}
+                    onChange={(e) => setAccount({ ...account, name: e.target.value })}
+                  />
+                  <Input
+                    className="w-40"
+                    placeholder="Banco"
+                    value={account.bank}
+                    onChange={(e) => setAccount({ ...account, bank: e.target.value })}
+                  />
+                  <Input
+                    className="w-40"
+                    placeholder="Saldo inicial"
+                    inputMode="decimal"
+                    value={account.initialBalance}
+                    onChange={(e) => setAccount({ ...account, initialBalance: e.target.value })}
+                  />
                   <Button type="submit" variant="outline">
                     <Plus /> Adicionar
                   </Button>
@@ -195,13 +234,24 @@ export default function FinanceSettingsPage() {
                   className="flex gap-2"
                   onSubmit={async (event) => {
                     event.preventDefault();
-                    if (await attempt(() => api.finance.savePaymentMethod(null, { name: method }), 'Forma de pagamento criada.')) {
+                    if (
+                      await attempt(
+                        () => api.finance.savePaymentMethod(null, { name: method }),
+                        'Forma de pagamento criada.',
+                      )
+                    ) {
                       setMethod('');
                       await methods.reload();
                     }
                   }}
                 >
-                  <Input className="w-56" placeholder="Nova forma de pagamento" required value={method} onChange={(e) => setMethod(e.target.value)} />
+                  <Input
+                    className="w-56"
+                    placeholder="Nova forma de pagamento"
+                    required
+                    value={method}
+                    onChange={(e) => setMethod(e.target.value)}
+                  />
                   <Button type="submit" variant="outline">
                     <Plus /> Adicionar
                   </Button>

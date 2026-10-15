@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/public/index.js';
+import { FilesModule } from '../files/public/index.js';
 import { CatalogService } from './catalog/catalog.service.js';
 import { CrmFacadeService } from './crm.facade.service.js';
 import {
@@ -23,9 +24,10 @@ import {
   PrismaPartyNoteRepository,
 } from './repositories/prisma-contact.repository.js';
 import { PrismaPartyRepository } from './repositories/prisma-party.repository.js';
+import { CrmFileOwner } from './crm-file-owner.js';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, FilesModule],
   controllers: [
     PartiesController,
     ContactsController,
@@ -34,6 +36,7 @@ import { PrismaPartyRepository } from './repositories/prisma-party.repository.js
     DepartmentsController,
   ],
   providers: [
+    CrmFileOwner,
     PartiesService,
     CatalogService,
     { provide: PARTY_REPOSITORY, useClass: PrismaPartyRepository },

@@ -4,6 +4,7 @@ import { Loader2, Plus } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Attachments } from '@/components/attachments';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ErrorMessage, Loading, PageHeader } from '@/components/common';
 import { ROLES } from '@/components/parties/roles';
@@ -243,6 +244,14 @@ export default function PartyPage() {
             </CardHeader>
             <CardContent>
               <Contacts partyId={data.id} canEdit={canEdit} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Anexos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Attachments ownerType="party" ownerId={data.id} />
             </CardContent>
           </Card>
           {data.notes && (
