@@ -284,8 +284,25 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      cancela. Front: `/financeiro` (mês a mês) e `/financeiro/configuracoes`.
      Fora da v1 (como no mapeamento): conciliação OFX, boleto, NFS-e, rateio
      por centro de custo e agrupamento de faturas.
+   - `production` (15/10/2026): produções (orçamento ao cliente) com itens
+     de várias quantidades; cada item é cotado com vários fornecedores
+     (valor unitário por quantidade) e se aprova uma quantidade por
+     fornecedor; BV (comissão) e honorários por item, em % ou valor; encargo
+     da produção (só troca sem pedido enviado). Os itens aprovados geram um
+     pedido de produção (PP) por fornecedor (e grupo de pedido), com tipo de
+     faturamento, desconto, BV negociado, entrega e 1º vencimento. Envio do
+     pedido ao financeiro pelo mesmo plano de faturamento da mídia (movido
+     para `finance/public/billing.ts`, usado pelos dois módulos); depois do
+     envio, os itens daquele fornecedor ficam travados até reabrir o
+     faturamento. Produção com pedido enviado não cancela; arquivar ou
+     cancelar o projeto fecha as produções. Front: pauta `/producao` e
+     documento `/producao/:id` (cotação, pedidos, dados gerais).
+     `backend/tsconfig.json` ganhou `useDefineForClassFields: false`: sem
+     isso, campos opcionais dos DTOs viravam `undefined` e apagavam valores
+     em `{ ...atual, ...entrada }`.
+     Pendente na produção: PDFs (orçamento e PP), textos padrão no front,
+     tela de configurações (encargos, status, textos).
    Falta:
-   `production`,
    `files`, `notifications` (menções), `ai`; templates, recorrência,
    duplicar projeto, aprovação de peças; `docker-compose.yml`, Dockerfiles e
    deploy. O Docker não está instalado na máquina do usuário.

@@ -5,6 +5,7 @@ import { HttpClient, LocalTokenStore } from './http';
 import { FinanceService } from './finance.service';
 import { MediaService } from './media.service';
 import { PartiesService, SettingsService } from './parties.service';
+import { ProductionService } from './production.service';
 import { CommentsService, JobsService, ProjectsService, StatusesService } from './projects.service';
 import { TimesheetService } from './timesheet.service';
 
@@ -27,4 +28,5 @@ export const api = {
   timesheet: new TimesheetService(http),
   media: new MediaService(http),
   finance: new FinanceService(http),
+  production: new ProductionService(http),
 };

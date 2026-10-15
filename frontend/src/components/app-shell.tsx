@@ -7,6 +7,7 @@ import {
   ListTodo,
   LogOut,
   Megaphone,
+  Printer,
   Timer,
   Menu,
   Settings,
@@ -51,6 +52,7 @@ const NAV: NavItem[] = [
     modules: ['projects'],
   },
   { href: '/midia', label: 'Mídia', icon: Megaphone, modules: ['medias'] },
+  { href: '/producao', label: 'Produção', icon: Printer, modules: ['productions'] },
   { href: '/financeiro', label: 'Financeiro', icon: Wallet, modules: ['financial'] },
   {
     href: '/timesheet',

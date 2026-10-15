@@ -4,6 +4,7 @@ import { AuthModule } from './modules/auth/public/index.js';
 import { CrmModule } from './modules/crm/public/index.js';
 import { FinanceModule } from './modules/finance/public/index.js';
 import { MediaModule } from './modules/media/public/index.js';
+import { ProductionModule } from './modules/production/public/index.js';
 import { ProjectsModule } from './modules/projects/public/index.js';
 import { SettingsModule } from './modules/settings/public/index.js';
 import { TimesheetModule } from './modules/timesheet/public/index.js';
@@ -23,6 +24,7 @@ import { PrismaModule } from './shared/prisma/prisma.module.js';
     TimesheetModule,
     MediaModule,
     FinanceModule,
+    ProductionModule,
   ],
   controllers: [HealthController],
 })
