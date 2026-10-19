@@ -1,10 +1,11 @@
 'use client';
 
-import { Copy, LayoutTemplate, Loader2, MoreVertical, Save } from 'lucide-react';
+import { CalendarClock, Copy, LayoutTemplate, Loader2, MoreVertical, Repeat, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/auth-provider';
+import { PostponeDialog, RecurrenceDialog } from '@/components/jobs/job-schedule';
 import { PartyPicker } from '@/components/pickers';
 import { Button } from '@/components/ui/button';
 import {
@@ -255,7 +256,7 @@ export function ProjectCopyMenu({ project, onChanged }: { project: Project; onCh
 export function JobCopyMenu({ job, onChanged }: { job: JobDetail; onChanged: () => void }) {
   const router = useRouter();
   const manager = useCanManageTemplates();
-  const [dialog, setDialog] = useState<'duplicate' | 'apply' | 'save' | null>(null);
+  const [dialog, setDialog] = useState<'duplicate' | 'apply' | 'save' | 'repeat' | 'postpone' | null>(null);
   const [client, setClient] = useState<NamedRef | null>(job.client);
   const [projectId, setProjectId] = useState<string>(GENERAL);
   const [templateJobId, setTemplateJobId] = useState('');
@@ -279,6 +280,16 @@ export function JobCopyMenu({ job, onChanged }: { job: JobDetail; onChanged: () 
               <LayoutTemplate /> Usar tarefas de template
             </DropdownMenuItem>
           )}
+          {job.can.edit && job.deadline && !job.recurrence && (
+            <DropdownMenuItem onSelect={() => setDialog('repeat')}>
+              <Repeat /> Repetir job
+            </DropdownMenuItem>
+          )}
+          {job.can.edit && (
+            <DropdownMenuItem onSelect={() => setDialog('postpone')}>
+              <CalendarClock /> Adiar prazos
+            </DropdownMenuItem>
+          )}
           {manager && (
             <DropdownMenuItem onSelect={() => setDialog('save')}>
               <Save /> Salvar como template
@@ -286,6 +297,9 @@ export function JobCopyMenu({ job, onChanged }: { job: JobDetail; onChanged: () 
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {dialog === 'repeat' && <RecurrenceDialog jobId={job.id} onClose={() => setDialog(null)} onDone={onChanged} />}
+      {dialog === 'postpone' && <PostponeDialog jobIds={[job.id]} onClose={() => setDialog(null)} onDone={onChanged} />}
 
       {dialog === 'duplicate' && (
         <Dialog open onOpenChange={(open) => !open && setDialog(null)}>

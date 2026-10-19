@@ -67,7 +67,7 @@ próprios, projeto oculto etc.).
 | `auth` | `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/password`, `/auth/me`, `/users`, `/access-profiles`, `/teams`, `/collaborators`, `/positions` |
 | `crm` | `/parties` (papéis, contatos, anotações), `/contacts`, `/client-groups`, `/departments` |
 | `settings` | `/settings/agency` |
-| `projects` | `/projects`, `/jobs`, `/tasks`, `/project-statuses`, `/predefined-briefings`, `/comments`, `/approvals` (pedido, `pending`, `vote`, `cancel`, `markers`), `/project-templates` (CRUD, `from-project`, `from-job`, `jobs`, criar projeto/job), `/projects/:id/duplicate`, `/projects/:id/apply-template`, `/jobs/:id/duplicate`, `/jobs/:id/apply-template` |
+| `projects` | `/projects`, `/jobs`, `/tasks`, `/project-statuses`, `/predefined-briefings`, `/comments`, `/approvals` (pedido, `pending`, `vote`, `cancel`, `markers`), `/project-templates` (CRUD, `from-project`, `from-job`, `jobs`, criar projeto/job), `/projects/:id/duplicate`, `/projects/:id/apply-template`, `/jobs/:id/duplicate`, `/jobs/:id/apply-template`, `/jobs/:id/recurrence`, `/jobs/postpone`, `/jobs/:id/workflow`, `/tasks/:id/dependencies` |
 | `timesheet` | `/timesheet/current`, `/timesheet/start`, `/timesheet/stop`, `/timesheet/running`, `/timesheet/entries`, `/timesheet/documents/:tipo/:id`, `/work-schedules` |
 | `media` | `/medias` (peças, grades, linhas, situação, envolvidos, `send-to-finance`, `reopen-billing`), `/medias/billing-types`, `/media-settings/*` (redes, praças, programas, métricas de custo, status) |
 | `finance` | `/finance/bills` (lançamentos, `settle`, `cancel`, `reopen`), `/finance/summary`, `/finance/transfers`, `/finance/accounts`, `/finance/categories`, `/finance-settings/*` |

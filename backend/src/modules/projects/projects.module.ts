@@ -10,7 +10,8 @@ import { CommentsService } from './comments/comments.service.js';
 import { DocumentCopyService } from './copy/document-copy.service.js';
 import { DocumentAccessService } from './document-access.service.js';
 import { DocumentLifecycleService } from './document-lifecycle.service.js';
-import { JobsController, TasksController } from './jobs/jobs.controller.js';
+import { JobScheduleService } from './jobs/job-schedule.service.js';
+import { JobScheduleController, JobsController, TasksController } from './jobs/jobs.controller.js';
 import { JobsService } from './jobs/jobs.service.js';
 import { NamingService } from './naming.service.js';
 import { ProjectsController } from './projects/projects.controller.js';
@@ -48,6 +49,7 @@ import { ProjectsNotifier } from './projects-notifier.js';
   imports: [AuthModule, FilesModule, NotificationsModule, CrmModule, SettingsModule],
   controllers: [
     ProjectsController,
+    JobScheduleController,
     JobsController,
     TasksController,
     StatusesController,
@@ -68,6 +70,7 @@ import { ProjectsNotifier } from './projects-notifier.js';
     ApprovalsService,
     TemplatesService,
     DocumentCopyService,
+    JobScheduleService,
     NamingService,
     DocumentLifecycleService,
     { provide: PROJECT_REPOSITORY, useClass: PrismaProjectRepository },

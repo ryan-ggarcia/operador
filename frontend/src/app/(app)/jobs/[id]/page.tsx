@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, Circle, Loader2, Pencil, Plus, RotateCcw, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, Loader2, Lock, Pencil, Plus, RotateCcw, Workflow, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -22,6 +22,7 @@ import { useReferenceData } from '@/components/reference-data';
 import { DocumentTimesheet } from '@/components/timesheet/document-timesheet';
 import { JobCopyMenu } from '@/components/templates/copy-menus';
 import { StartTimerButton } from '@/components/timesheet/timer';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -159,6 +160,15 @@ function Tasks({ job, onChange }: { job: JobDetail; onChange: () => void }) {
     }
   }
 
+  async function workflow(action: 'set' | 'clear') {
+    try {
+      await (action === 'set' ? api.jobs.setWorkflow(job.id) : api.jobs.clearWorkflow(job.id));
+      onChange();
+    } catch (caught) {
+      toast.error((caught as Error).message);
+    }
+  }
+
   async function act(taskId: string, action: JobAction) {
     try {
       await api.jobs.actOnTask(taskId, action);
@@ -191,11 +201,33 @@ function Tasks({ job, onChange }: { job: JobDetail; onChange: () => void }) {
             </Button>
             <span className={`flex-1 ${task.situation !== 'OPEN' ? 'text-muted-foreground line-through' : ''}`}>
               {task.title}
+              {task.situation === 'OPEN' && task.blockedByIds.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="ml-2 font-normal"
+                  title="Conclua antes as tarefas de que esta depende"
+                >
+                  <Lock /> bloqueada
+                </Badge>
+              )}
             </span>
             <UserAvatar user={user(task.responsibleId) ?? null} size="sm" />
           </li>
         ))}
       </ul>
+      {job.can.edit && job.tasks.length > 1 && (
+        <div className="flex gap-2">
+          {job.tasks.some((task) => task.dependsOnIds.length > 0) ? (
+            <Button variant="outline" size="sm" onClick={() => void workflow('clear')}>
+              Remover dependências
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => void workflow('set')}>
+              <Workflow /> Ativar workflow (uma tarefa por vez, na ordem)
+            </Button>
+          )}
+        </div>
+      )}
       {job.can.edit && (
         <form onSubmit={add} className="flex flex-wrap gap-2">
           <Input
@@ -267,6 +299,11 @@ export default function JobPage() {
           <span className="flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground tabular-nums">{data.number}</span> {data.title}
             <SituationBadge situation={data.situation} />
+            {data.recurrence && (
+              <Badge variant="outline">
+                Job recorrente {data.recurrence.position}/{data.recurrence.total}
+              </Badge>
+            )}
           </span>
         }
         description={

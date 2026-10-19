@@ -240,6 +240,9 @@ export interface Task {
   deadline: string | null;
   situation: JobSituation;
   completedAt: string | null;
+  /** Workflow: tarefas de que esta depende e as que ainda a bloqueiam. */
+  dependsOnIds: string[];
+  blockedByIds: string[];
 }
 
 export interface Job {
@@ -270,6 +273,7 @@ export interface Job {
 
 export interface JobDetail extends Job {
   tasks: Task[];
+  recurrence: { seriesId: string; position: number; total: number } | null;
 }
 
 export interface Comment {

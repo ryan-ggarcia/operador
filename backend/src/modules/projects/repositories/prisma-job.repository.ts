@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '../../../generated/prisma/client.js';
+import { Prisma } from '../../../generated/prisma/client.js';
 import type { FieldChange } from '../../../shared/history/diff.js';
 import { PrismaService } from '../../../shared/prisma/prisma.service.js';
 import type { Page } from '../../../shared/validation/pagination.js';
@@ -8,6 +8,7 @@ import type {
   JobChanges,
   JobFilter,
   JobRecord,
+  JobRecurrence,
   JobRepository,
   JobVisibility,
   NewJob,
@@ -34,6 +35,17 @@ const JOB_INCLUDE = {
 } satisfies Prisma.JobInclude;
 
 type JobRow = Prisma.JobGetPayload<{ include: typeof JOB_INCLUDE }>;
+
+const TASK_ARGS = {
+  omit: { updatedById: true },
+  include: { dependsOn: { select: { dependsOnTaskId: true } } },
+} satisfies Prisma.TaskDefaultArgs;
+
+type TaskRow = Prisma.TaskGetPayload<typeof TASK_ARGS>;
+
+function toTask({ dependsOn, ...row }: TaskRow): TaskRecord {
+  return { ...row, dependsOnIds: dependsOn.map((link) => link.dependsOnTaskId) };
+}
 
 function toRecord(row: JobRow, openTasks: number): JobRecord {
   const { project } = row;
@@ -68,6 +80,7 @@ function toRecord(row: JobRow, openTasks: number): JobRecord {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     memberIds: row.members.map((member) => member.userId),
+    recurrence: (row.recurrence as JobRecurrence | null) ?? null,
     openTasks,
     totalTasks: row._count.tasks,
   };
@@ -333,16 +346,18 @@ export class PrismaJobRepository implements JobRepository {
     return this.prisma.job.count({ where: { clientId, situation: 'OPEN' } });
   }
 
-  listTasks(jobId: string): Promise<TaskRecord[]> {
-    return this.prisma.task.findMany({
+  async listTasks(jobId: string): Promise<TaskRecord[]> {
+    const rows = await this.prisma.task.findMany({
       where: { jobId },
       orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
-      omit: { updatedById: true },
+      ...TASK_ARGS,
     });
+    return rows.map(toTask);
   }
 
-  findTask(id: string): Promise<TaskRecord | null> {
-    return this.prisma.task.findUnique({ where: { id }, omit: { updatedById: true } });
+  async findTask(id: string): Promise<TaskRecord | null> {
+    const row = await this.prisma.task.findUnique({ where: { id }, ...TASK_ARGS });
+    return row ? toTask(row) : null;
   }
 
   findTaskIdsByJobs(jobIds: string[]): Promise<{ jobId: string; id: string }[]> {
@@ -355,33 +370,64 @@ export class PrismaJobRepository implements JobRepository {
 
   async createTask(jobId: string, data: TaskData, actorId: string): Promise<TaskRecord> {
     const last = await this.prisma.task.aggregate({ where: { jobId }, _max: { order: true } });
-    return this.prisma.task.create({
-      data: { ...data, jobId, order: (last._max.order ?? -1) + 1, updatedById: actorId },
-      omit: { updatedById: true },
-    });
+    return toTask(
+      await this.prisma.task.create({
+        data: { ...data, jobId, order: (last._max.order ?? -1) + 1, updatedById: actorId },
+        ...TASK_ARGS,
+      }),
+    );
   }
 
-  updateTask(
+  async updateTask(
     id: string,
     data: Partial<TaskData> & { order?: number },
     actorId: string,
   ): Promise<TaskRecord> {
-    return this.prisma.task.update({
+    return toTask(
+      await this.prisma.task.update({
+        where: { id },
+        data: { ...data, updatedById: actorId },
+        ...TASK_ARGS,
+      }),
+    );
+  }
+
+  async changeTaskSituation(id: string, situation: JobSituation, actorId: string): Promise<TaskRecord> {
+    return toTask(
+      await this.prisma.task.update({
+        where: { id },
+        data: {
+          situation,
+          completedAt: situation === 'DONE' ? new Date() : null,
+          updatedById: actorId,
+        },
+        ...TASK_ARGS,
+      }),
+    );
+  }
+
+  async setRecurrence(id: string, recurrence: JobRecurrence | null): Promise<void> {
+    await this.prisma.job.update({
       where: { id },
-      data: { ...data, updatedById: actorId },
-      omit: { updatedById: true },
+      data: { recurrence: recurrence ? (recurrence as unknown as Prisma.InputJsonValue) : Prisma.DbNull },
     });
   }
 
-  changeTaskSituation(id: string, situation: JobSituation, actorId: string): Promise<TaskRecord> {
-    return this.prisma.task.update({
-      where: { id },
-      data: {
-        situation,
-        completedAt: situation === 'DONE' ? new Date() : null,
-        updatedById: actorId,
-      },
-      omit: { updatedById: true },
-    });
+  async replaceDependencies(jobId: string, links: { taskId: string; dependsOnId: string }[]): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.taskDependency.deleteMany({ where: { task: { jobId } } }),
+      this.prisma.taskDependency.createMany({
+        data: links.map((link) => ({ taskId: link.taskId, dependsOnTaskId: link.dependsOnId })),
+      }),
+    ]);
+  }
+
+  async setTaskDependencies(taskId: string, dependsOnIds: string[]): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.taskDependency.deleteMany({ where: { taskId } }),
+      this.prisma.taskDependency.createMany({
+        data: dependsOnIds.map((dependsOnTaskId) => ({ taskId, dependsOnTaskId })),
+      }),
+    ]);
   }
 }

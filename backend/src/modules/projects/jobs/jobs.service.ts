@@ -30,6 +30,7 @@ import {
   type JobSituation,
 } from '../domain/job-rules.js';
 import { canViewProject } from '../domain/project-rules.js';
+import { blockers, checkDependencies, ScheduleRuleError, workflowChain } from '../domain/schedule-rules.js';
 import { DocumentLifecycleService } from '../document-lifecycle.service.js';
 import { NamingService, type NamedRef, type ResolvedNames, type UserRef } from '../naming.service.js';
 import {
@@ -118,7 +119,14 @@ export interface JobView {
   closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  /** "Job recorrente X/Y". */
+  recurrence: { seriesId: string; position: number; total: number } | null;
   can: { edit: boolean; act: boolean };
+}
+
+/** Tarefa com as dependências ainda abertas que a bloqueiam. */
+export interface TaskView extends TaskRecord {
+  blockedByIds: string[];
 }
 
 export interface TaskInput {
@@ -187,10 +195,13 @@ export class JobsService {
     };
   }
 
-  async get(userId: string, access: UserPermissions, id: string): Promise<JobView & { tasks: TaskRecord[] }> {
+  async get(userId: string, access: UserPermissions, id: string): Promise<JobView & { tasks: TaskView[] }> {
     const job = await this.requireViewable(userId, access, id);
     const [names, tasks] = await Promise.all([this.resolveNames([job]), this.jobs.listTasks(id)]);
-    return { ...this.toView(userId, access, job, names, new Date()), tasks };
+    return {
+      ...this.toView(userId, access, job, names, new Date()),
+      tasks: tasks.map((task) => ({ ...task, blockedByIds: blockers(task, tasks).map((blocker) => blocker.id) })),
+    };
   }
 
   /** Job que o usuário pode ver, ou erro (usado também por comentários). */
@@ -394,8 +405,59 @@ export class JobsService {
     if (job.situation !== 'OPEN') throw new BadRequestException('Reabra o job antes de mexer nas tarefas.');
     const next = nextJobSituation(task.situation, action);
     if (!next) throw new BadRequestException('A tarefa já está nesta situação.');
+    if (next === 'DONE') {
+      const blocking = blockers(task, await this.jobs.listTasks(task.jobId));
+      if (blocking.length > 0) {
+        const titles = blocking.map((blocker) => `"${blocker.title}"`).join(', ');
+        throw new BadRequestException(`Tarefa bloqueada: conclua antes ${titles}.`);
+      }
+    }
     if (next !== 'OPEN') await this.lifecycle.beforeClose({ jobIds: [], taskIds: [taskId] });
     return this.jobs.changeTaskSituation(taskId, next, userId);
+  }
+
+  /** Workflow: cada tarefa aberta passa a depender da anterior, na ordem. */
+  async setWorkflow(userId: string, access: UserPermissions, jobId: string): Promise<JobView & { tasks: TaskView[] }> {
+    await this.requireEditable(userId, access, jobId);
+    const open = (await this.jobs.listTasks(jobId)).filter((task) => task.situation === 'OPEN');
+    const links = this.rule(() => workflowChain(open.map((task) => task.id)));
+    await this.jobs.replaceDependencies(jobId, links);
+    return this.get(userId, access, jobId);
+  }
+
+  /** Remove todas as dependências entre as tarefas do job. */
+  async clearWorkflow(userId: string, access: UserPermissions, jobId: string): Promise<JobView & { tasks: TaskView[] }> {
+    await this.requireEditable(userId, access, jobId);
+    await this.jobs.replaceDependencies(jobId, []);
+    return this.get(userId, access, jobId);
+  }
+
+  /** "Depende de": tarefas do mesmo job, sem ciclo. */
+  async setTaskDependencies(
+    userId: string,
+    access: UserPermissions,
+    taskId: string,
+    dependsOnIds: string[],
+  ): Promise<JobView & { tasks: TaskView[] }> {
+    const task = await this.requireTask(taskId);
+    await this.requireEditable(userId, access, task.jobId);
+    const tasks = await this.jobs.listTasks(task.jobId);
+    await this.jobs.setTaskDependencies(taskId, this.rule(() => checkDependencies(taskId, dependsOnIds, tasks)));
+    return this.get(userId, access, task.jobId);
+  }
+
+  private rule<T>(check: () => T): T {
+    try {
+      return check();
+    } catch (error) {
+      if (error instanceof ScheduleRuleError) throw new BadRequestException(error.message);
+      throw error;
+    }
+  }
+
+  /** Job que o usuário pode alterar (aberto), ou erro. */
+  assertEditable(userId: string, access: UserPermissions, id: string): Promise<JobRecord> {
+    return this.requireEditable(userId, access, id);
   }
 
   private async requireEditable(userId: string, access: UserPermissions, id: string): Promise<JobRecord> {
@@ -522,6 +584,9 @@ export class JobsService {
       closedAt: job.closedAt,
       createdAt: job.createdAt,
       updatedAt: job.updatedAt,
+      recurrence: job.recurrence
+        ? { seriesId: job.recurrence.seriesId, position: job.recurrence.position, total: job.recurrence.total }
+        : null,
       can: {
         edit: canEditJob(userId, access, view),
         act: canActOnJob(userId, access, view),

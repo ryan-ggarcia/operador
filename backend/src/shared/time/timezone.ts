@@ -86,3 +86,24 @@ export function localDate(instant: Date, timeZone: string): string {
   );
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
+
+/** Data e hora locais de um instante no fuso. */
+export function localParts(
+  instant: Date,
+  timeZone: string,
+): { year: number; month: number; day: number; hour: number; minute: number; second: number; ms: number } {
+  const parts = Object.fromEntries(
+    formatter(timeZone)
+      .formatToParts(instant)
+      .map((part) => [part.type, part.value]),
+  );
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+    second: Number(parts.second),
+    ms: instant.getUTCMilliseconds(),
+  };
+}

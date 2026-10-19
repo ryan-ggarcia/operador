@@ -10,6 +10,7 @@ import { ProjectsService, type ProjectView } from '../projects/projects.service.
 import { JOB_REPOSITORY, type JobRecord, type JobRepository } from '../repositories/job.repository.js';
 import { STATUS_REPOSITORY, type StatusRepository } from '../repositories/status.repository.js';
 import { TemplatesService } from '../templates/templates.service.js';
+import { shiftInstantDays } from './local-shift.js';
 import { projectJobs } from './project-jobs.js';
 
 export interface JobOverrides {
@@ -145,32 +146,51 @@ export class DocumentCopyService {
     return this.projectsService.get(userId, access, project.id);
   }
 
-  private async copyJob(userId: string, access: UserPermissions, source: JobRecord, destination: JobDestination): Promise<string> {
-    const active = await this.naming.activeUserIds([source.responsibleId ?? '', ...source.memberIds].filter(Boolean));
+  /**
+   * Copia o job (e as tarefas não canceladas, reabertas) para o destino.
+   * `shiftDays` desloca início e prazos do job e das tarefas (recorrência).
+   */
+  async copyJob(
+    userId: string,
+    access: UserPermissions,
+    source: JobRecord,
+    destination: JobDestination,
+    shiftDays = 0,
+  ): Promise<string> {
+    const timezone = (await this.settings.getAgency()).timezone;
+    const shift = (date: Date | null) => (date ? shiftInstantDays(date, shiftDays, timezone) : null);
+    const tasks = (await this.jobs.listTasks(source.id))
+      .filter((task) => task.situation !== 'CANCELED')
+      .sort((a, b) => a.order - b.order);
+    const active = await this.naming.activeUserIds(
+      [source.responsibleId, ...source.memberIds, ...tasks.map((task) => task.responsibleId)].filter(
+        (id): id is string => Boolean(id),
+      ),
+    );
+    const statuses = await this.activeStatusIds();
     const sameClient = destination.clientId === source.clientId;
+    const deadline = shift(source.deadline);
     const job = await this.jobsService.create(userId, access, {
       title: source.title,
       clientId: destination.clientId,
       projectId: destination.projectId ?? null,
       clientContactId: sameClient ? source.clientContactId : null,
       responsibleId: source.responsibleId && active.has(source.responsibleId) ? source.responsibleId : null,
-      statusId: (await this.activeStatusIds()).has(source.statusId ?? '') ? source.statusId : null,
-      startAt: source.startAt,
-      ...(await this.deadlineOf(source)),
+      statusId: source.statusId && statuses.has(source.statusId) ? source.statusId : null,
+      startAt: shift(source.startAt),
+      deadline: deadline ? (source.deadlineHasTime ? deadline.toISOString() : localDate(deadline, timezone)) : null,
+      deadlineHasTime: Boolean(deadline) && source.deadlineHasTime,
       estimatedMinutes: source.estimatedMinutes,
       briefing: source.briefing,
       memberIds: source.memberIds.filter((id) => active.has(id) && id !== userId),
     });
-    const tasks = (await this.jobs.listTasks(source.id))
-      .filter((task) => task.situation !== 'CANCELED')
-      .sort((a, b) => a.order - b.order);
     for (const task of tasks) {
       await this.jobsService.createTask(userId, access, job.id, {
         title: task.title,
         responsibleId: task.responsibleId && active.has(task.responsibleId) ? task.responsibleId : null,
-        statusId: task.statusId,
-        startAt: task.startAt,
-        deadline: task.deadline,
+        statusId: task.statusId && statuses.has(task.statusId) ? task.statusId : null,
+        startAt: shift(task.startAt),
+        deadline: shift(task.deadline),
       });
     }
     return job.id;
@@ -213,11 +233,5 @@ export class DocumentCopyService {
 
   private async activeStatusIds(): Promise<Set<string>> {
     return new Set((await this.statuses.list('JOB', false)).map((status) => status.id));
-  }
-
-  private async deadlineOf(job: JobRecord): Promise<{ deadline: string | null; deadlineHasTime: boolean }> {
-    if (!job.deadline) return { deadline: null, deadlineHasTime: false };
-    if (job.deadlineHasTime) return { deadline: job.deadline.toISOString(), deadlineHasTime: true };
-    return { deadline: localDate(job.deadline, (await this.settings.getAgency()).timezone), deadlineHasTime: false };
   }
 }

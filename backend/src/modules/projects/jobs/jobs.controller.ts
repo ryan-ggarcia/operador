@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import type { AuthUser } from '../../../shared/auth/auth-user.js';
@@ -29,6 +30,8 @@ import {
   UpdateJobDto,
   UpdateTaskDto,
 } from '../dto/projects.dto.js';
+import { PostponeDto, RecurrenceDto, TaskDependenciesDto } from '../dto/schedule.dto.js';
+import { JobScheduleService } from './job-schedule.service.js';
 import { JobsService } from './jobs.service.js';
 
 @Controller('jobs')
@@ -166,6 +169,25 @@ export class JobsController {
     return this.comments.list(user.id, access, 'JOB', id);
   }
 
+  @Post(':id/workflow')
+  @HttpCode(HttpStatus.OK)
+  setWorkflow(
+    @CurrentUser() user: AuthUser,
+    @CurrentAccess() access: UserPermissions,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.jobs.setWorkflow(user.id, access, id);
+  }
+
+  @Delete(':id/workflow')
+  clearWorkflow(
+    @CurrentUser() user: AuthUser,
+    @CurrentAccess() access: UserPermissions,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.jobs.clearWorkflow(user.id, access, id);
+  }
+
   @Post(':id/comments')
   addComment(
     @CurrentUser() user: AuthUser,
@@ -181,6 +203,16 @@ export class JobsController {
 @RequireAccess('jobs')
 export class TasksController {
   constructor(private readonly jobs: JobsService) {}
+
+  @Put(':id/dependencies')
+  setDependencies(
+    @CurrentUser() user: AuthUser,
+    @CurrentAccess() access: UserPermissions,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: TaskDependenciesDto,
+  ) {
+    return this.jobs.setTaskDependencies(user.id, access, id, body.dependsOnIds);
+  }
 
   @Patch(':id')
   update(
@@ -220,5 +252,28 @@ export class TasksController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.jobs.changeTaskSituation(user.id, access, id, 'reopen');
+  }
+}
+
+/** Recorrência e adiamento de prazos. */
+@Controller('jobs')
+@RequireAccess('jobs')
+export class JobScheduleController {
+  constructor(private readonly schedule: JobScheduleService) {}
+
+  @Post('postpone')
+  @HttpCode(HttpStatus.OK)
+  postpone(@CurrentUser() user: AuthUser, @CurrentAccess() access: UserPermissions, @Body() body: PostponeDto) {
+    return this.schedule.postpone(user.id, access, body);
+  }
+
+  @Post(':id/recurrence')
+  createRecurrence(
+    @CurrentUser() user: AuthUser,
+    @CurrentAccess() access: UserPermissions,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: RecurrenceDto,
+  ) {
+    return this.schedule.createRecurrence(user.id, access, id, body);
   }
 }

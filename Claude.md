@@ -356,9 +356,25 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      projeto", modelo no "Novo job" e menu ⋮ no projeto e no job.
      Pendente: duplicar mídias e produções junto com o projeto; dependência
      entre tarefas (workflow) nos templates.
+   - Jobs: recorrência, adiar e workflow (19/10/2026). Recorrência a partir
+     do prazo do job (diária com opção de dias úteis, semanal nos dias
+     escolhidos, mensal no mesmo dia ou no último dia; termina após N vezes
+     ou numa data; no máximo 50 jobs): cria as cópias na hora, no mesmo
+     projeto, com início e prazos deslocados mantendo a hora local; cada
+     job guarda "recorrente X/Y" no campo `recurrence`. Adiar prazos
+     (`/jobs/postpone`, em lote): minutos a anos, job/tarefas/ambos,
+     "somente dias úteis"; sem prazo fica de fora; passa pelo update do job
+     (entra no histórico). Workflow: cada tarefa aberta depende da anterior;
+     tarefa bloqueada não conclui; dependências manuais sem ciclo
+     (`PUT /tasks/:id/dependencies`). Regras em
+     `projects/domain/schedule-rules.ts`. Front: "Repetir job" e "Adiar
+     prazos" no menu ⋮ do job, selo "Job recorrente X/Y", botão de workflow
+     e selo "bloqueada" nas tarefas. Pendente: editar dependências tarefa a
+     tarefa no front, adiar em lote pela pauta, copiar dependências na
+     recorrência/duplicação.
    Falta (a integração com o Claude, módulo `ai`, fica por último, a pedido
    do usuário em 15/10/2026):
-   recorrência de jobs; `docker-compose.yml`, Dockerfiles e
+   `docker-compose.yml`, Dockerfiles e
    deploy. O Docker não está instalado na máquina do usuário.
 5. Engenharia reversa de faturamento (14/10/2026): resultados em
    `docs/operand/midia.md` (2.8) e `producao.md` (2.9); registro técnico em

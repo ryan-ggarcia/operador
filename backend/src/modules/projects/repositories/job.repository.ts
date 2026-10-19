@@ -2,8 +2,18 @@ import type { FieldChange } from '../../../shared/history/diff.js';
 import type { Page } from '../../../shared/validation/pagination.js';
 import type { JobSituation } from '../domain/job-rules.js';
 import type { ProjectSituation } from '../domain/project-rules.js';
+import type { RecurrenceRule } from '../domain/schedule-rules.js';
 
 export const JOB_REPOSITORY = Symbol('JOB_REPOSITORY');
+
+/** Job de uma série recorrente ("Job recorrente X/Y"). */
+export interface JobRecurrence {
+  /** Id do job original da série. */
+  seriesId: string;
+  position: number;
+  total: number;
+  rule: RecurrenceRule;
+}
 
 export interface JobRecord {
   id: string;
@@ -32,6 +42,7 @@ export interface JobRecord {
   createdAt: Date;
   updatedAt: Date;
   memberIds: string[];
+  recurrence: JobRecurrence | null;
   openTasks: number;
   totalTasks: number;
 }
@@ -104,6 +115,8 @@ export interface TaskRecord {
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  /** Tarefas do mesmo job das quais esta depende (workflow). */
+  dependsOnIds: string[];
 }
 
 export interface TaskData {
@@ -140,4 +153,8 @@ export interface JobRepository {
   createTask(jobId: string, data: TaskData, actorId: string): Promise<TaskRecord>;
   updateTask(id: string, data: Partial<TaskData> & { order?: number }, actorId: string): Promise<TaskRecord>;
   changeTaskSituation(id: string, situation: JobSituation, actorId: string): Promise<TaskRecord>;
+  setRecurrence(id: string, recurrence: JobRecurrence | null): Promise<void>;
+  /** Troca todas as dependências entre as tarefas do job. */
+  replaceDependencies(jobId: string, links: { taskId: string; dependsOnId: string }[]): Promise<void>;
+  setTaskDependencies(taskId: string, dependsOnIds: string[]): Promise<void>;
 }

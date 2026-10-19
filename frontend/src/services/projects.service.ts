@@ -132,6 +132,37 @@ export class JobsService {
   actOnTask(taskId: string, action: JobAction) {
     return this.http.post<Task>(`/tasks/${taskId}/${action}`);
   }
+  createRecurrence(id: string, rule: RecurrenceRule) {
+    return this.http.post<{ total: number; jobIds: string[] }>(`/jobs/${id}/recurrence`, rule);
+  }
+  postpone(input: PostponeInput) {
+    return this.http.post<{ jobs: number; tasks: number; skipped: number }>('/jobs/postpone', input);
+  }
+  /** Workflow: cada tarefa aberta depende da anterior. */
+  setWorkflow(id: string) {
+    return this.http.post<JobDetail>(`/jobs/${id}/workflow`);
+  }
+  clearWorkflow(id: string) {
+    return this.http.delete<JobDetail>(`/jobs/${id}/workflow`);
+  }
+}
+
+export interface RecurrenceRule {
+  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  interval: number;
+  businessDaysOnly?: boolean;
+  weekdays?: number[];
+  monthlyMode?: 'SAME_DAY' | 'LAST_DAY';
+  count?: number;
+  until?: string;
+}
+
+export interface PostponeInput {
+  jobIds: string[];
+  amount: number;
+  unit: 'MINUTES' | 'HOURS' | 'DAYS' | 'WEEKS' | 'MONTHS' | 'YEARS';
+  target: 'JOB' | 'TASKS' | 'BOTH';
+  businessDaysOnly?: boolean;
 }
 
 export class CommentsService {
