@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, Plus, RotateCcw, Send, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, FileText, Plus, RotateCcw, Send, Trash2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -148,44 +148,51 @@ export default function MediaPage() {
           </>
         }
         actions={
-          data.can.act &&
-          (data.situation === 'OPEN' ? (
-            <>
-              {data.sentToFinanceAt ? (
-                <Button
-                  variant="outline"
-                  disabled={acting}
-                  onClick={() =>
-                    confirm('Reabrir o faturamento cancela as faturas da mídia no financeiro. Continuar?') &&
-                    void billing('reopen')
-                  }
-                >
-                  <RotateCcw /> Reabrir faturamento
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  disabled={acting || !data.billingType}
-                  onClick={() =>
-                    confirm('Enviar as faturas ao financeiro? A mídia fica travada até reabrir o faturamento.') &&
-                    void billing('send')
-                  }
-                >
-                  <Send /> Enviar ao financeiro
-                </Button>
-              )}
-              <Button variant="outline" disabled={acting} onClick={() => void act('cancel')}>
-                <XCircle /> Cancelar
-              </Button>
-              <Button disabled={acting} onClick={() => void act('complete')}>
-                <CheckCircle2 /> Concluir
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline" disabled={acting} onClick={() => void act('reopen')}>
-              <RotateCcw /> Reabrir
+          <>
+            <Button variant="outline" asChild>
+              <Link href={`/midia/${data.id}/pi`}>
+                <FileText /> PI
+              </Link>
             </Button>
-          ))
+            {data.can.act &&
+              (data.situation === 'OPEN' ? (
+                <>
+                  {data.sentToFinanceAt ? (
+                    <Button
+                      variant="outline"
+                      disabled={acting}
+                      onClick={() =>
+                        confirm('Reabrir o faturamento cancela as faturas da mídia no financeiro. Continuar?') &&
+                        void billing('reopen')
+                      }
+                    >
+                      <RotateCcw /> Reabrir faturamento
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      disabled={acting || !data.billingType}
+                      onClick={() =>
+                        confirm('Enviar as faturas ao financeiro? A mídia fica travada até reabrir o faturamento.') &&
+                        void billing('send')
+                      }
+                    >
+                      <Send /> Enviar ao financeiro
+                    </Button>
+                  )}
+                  <Button variant="outline" disabled={acting} onClick={() => void act('cancel')}>
+                    <XCircle /> Cancelar
+                  </Button>
+                  <Button disabled={acting} onClick={() => void act('complete')}>
+                    <CheckCircle2 /> Concluir
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" disabled={acting} onClick={() => void act('reopen')}>
+                  <RotateCcw /> Reabrir
+                </Button>
+              ))}
+          </>
         }
       />
 

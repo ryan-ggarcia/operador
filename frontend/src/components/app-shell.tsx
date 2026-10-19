@@ -132,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <ReferenceDataProvider>
       <TimerProvider>
         <div className="flex min-h-screen">
-          <aside className="hidden w-60 shrink-0 flex-col gap-6 border-r bg-sidebar py-5 md:flex">
+          <aside className="hidden w-60 print:hidden shrink-0 flex-col gap-6 border-r bg-sidebar py-5 md:flex">
             <Brand />
             <div className="px-2">
               <Navigation />
@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </aside>
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="flex h-14 items-center justify-between gap-2 border-b px-4 md:px-8">
+            <header className="flex h-14 print:hidden items-center justify-between gap-2 border-b px-4 md:px-8">
               <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden" aria-label="Abrir menu">
@@ -196,7 +196,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </DropdownMenu>
             </header>
             <NotificationPreferencesDialog open={preferencesOpen} onOpenChange={setPreferencesOpen} />
-            <main className="flex-1 px-4 py-6 md:px-8">{children}</main>
+            <main className="flex-1 px-4 py-6 md:px-8 print:p-0">{children}</main>
           </div>
         </div>
       </TimerProvider>

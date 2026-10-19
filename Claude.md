@@ -372,6 +372,15 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      e selo "bloqueada" nas tarefas. Pendente: editar dependências tarefa a
      tarefa no front, adiar em lote pela pauta, copiar dependências na
      recorrência/duplicação.
+   - PI e logo (19/10/2026): página `/midia/:id/pi` para imprimir ou salvar
+     em PDF pelo navegador (sem gerar PDF no servidor, sem dependência nova):
+     agência com logo, veículo e cliente (razão social, CNPJ, endereço),
+     campanha, peças, grades e linhas, totais, faturamento, observações ao
+     veículo e assinaturas. Layout fixo (sem as preferências do PDF do
+     Operand). Logo: anexo de imagem da agência (`ownerType` `agency`, id
+     fixo `00000000-…`, registrado por `settings`; todos veem, só
+     administrador troca), enviado em Configurações; vale a imagem mais
+     recente. O campo `logoFileId` da agência segue sem uso.
    Falta (a integração com o Claude, módulo `ai`, fica por último, a pedido
    do usuário em 15/10/2026):
    `docker-compose.yml`, Dockerfiles e

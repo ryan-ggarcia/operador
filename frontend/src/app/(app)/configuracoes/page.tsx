@@ -3,6 +3,7 @@
 import { KeyRound, Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Attachments } from '@/components/attachments';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ErrorMessage, Loading, PageHeader } from '@/components/common';
 import { useReferenceData } from '@/components/reference-data';
@@ -26,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useResource } from '@/hooks/use-resource';
 import { formatDateTime } from '@/lib/format';
 import { api } from '@/services';
+import { AGENCY_FILE_OWNER_ID } from '@/services/files.service';
 import type { AccessProfile, Agency, UserRecord } from '@/services/types';
 
 function AgencySection() {
@@ -73,21 +75,28 @@ function AgencyForm({ agency, onSaved }: { agency: Agency; onSaved: (agency: Age
   }
 
   return (
-    <form onSubmit={save} className="grid max-w-2xl gap-4 sm:grid-cols-2">
-      {field('legalName', 'Razão social')}
-      {field('tradeName', 'Nome fantasia')}
-      {field('cnpj', 'CNPJ')}
-      {field('email', 'E-mail')}
-      {field('phone', 'Telefone')}
-      {field('stateRegistration', 'Inscrição estadual')}
-      {field('municipalRegistration', 'Inscrição municipal')}
-      <div className="sm:col-span-2">
-        <Button type="submit" disabled={saving}>
-          {saving && <Loader2 className="animate-spin" />}
-          Salvar
-        </Button>
+    <>
+      <form onSubmit={save} className="grid max-w-2xl gap-4 sm:grid-cols-2">
+        {field('legalName', 'Razão social')}
+        {field('tradeName', 'Nome fantasia')}
+        {field('cnpj', 'CNPJ')}
+        {field('email', 'E-mail')}
+        {field('phone', 'Telefone')}
+        {field('stateRegistration', 'Inscrição estadual')}
+        {field('municipalRegistration', 'Inscrição municipal')}
+        <div className="sm:col-span-2">
+          <Button type="submit" disabled={saving}>
+            {saving && <Loader2 className="animate-spin" />}
+            Salvar
+          </Button>
+        </div>
+      </form>
+      {/* Fora do formulário: os anexos têm formulários próprios. */}
+      <div className="mt-6 grid max-w-2xl gap-2">
+        <Label>Logo (a imagem mais recente sai no PI)</Label>
+        <Attachments ownerType="agency" ownerId={AGENCY_FILE_OWNER_ID} />
       </div>
-    </form>
+    </>
   );
 }
 
