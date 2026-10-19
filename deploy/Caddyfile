@@ -1,0 +1,4 @@
+# Certificado HTTPS automático (Let's Encrypt) para o domínio da API.
+{$API_DOMAIN} {
+	reverse_proxy backend:3001
+}

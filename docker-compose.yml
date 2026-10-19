@@ -1,0 +1,55 @@
+# Ambiente local completo: docker compose up --build
+# Front em http://localhost:3000, API em http://localhost:3001.
+# Na primeira vez, criar o dono da conta:
+#   docker compose exec backend npx prisma db seed
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: operador
+      POSTGRES_PASSWORD: operador
+      POSTGRES_DB: operador
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U operador']
+      interval: 2s
+      retries: 30
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://operador:operador@postgres:5432/operador
+      JWT_SECRET: troque-por-um-segredo-longo
+      FRONTEND_URL: http://localhost:3000
+      API_PUBLIC_URL: http://localhost:3001
+      FILES_LOCAL_DIR: /data/storage
+      OWNER_EMAIL: dono@agencia.local
+      OWNER_NAME: Dono da conta
+      OWNER_PASSWORD: troque-esta-senha
+    ports:
+      - '3001:3001'
+    volumes:
+      - storage:/data/storage
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3001
+    depends_on:
+      - backend
+    ports:
+      - '3000:3000'
+
+volumes:
+  postgres:
+  storage:

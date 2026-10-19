@@ -381,10 +381,19 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      fixo `00000000-…`, registrado por `settings`; todos veem, só
      administrador troca), enviado em Configurações; vale a imagem mais
      recente. O campo `logoFileId` da agência segue sem uso.
+   - Docker e deploy (19/10/2026), passo a passo em `docs/deploy.md`:
+     `backend/Dockerfile` (migrações rodam ao subir), `frontend/Dockerfile`
+     (só local), `docker-compose.yml` local (PostgreSQL, API e front),
+     `deploy/docker-compose.prod.yml` na VPS (API + Caddy com HTTPS; variáveis
+     em `deploy/.env`, modelo em `deploy/.env.example`), `netlify.toml` e
+     `.github/workflows/deploy.yml` (push na `main`: testes e depois SSH na
+     VPS com `git pull` e `up --build`). **Não testado com Docker de
+     verdade** (o Docker não está instalado na máquina do usuário): conferir
+     no primeiro deploy, principalmente a conexão SSL com o Supabase.
    Falta (a integração com o Claude, módulo `ai`, fica por último, a pedido
-   do usuário em 15/10/2026):
-   `docker-compose.yml`, Dockerfiles e
-   deploy. O Docker não está instalado na máquina do usuário.
+   do usuário em 15/10/2026): o módulo `ai`; PDFs da produção e tela de
+   configurações da produção; tabelas de preço de TV/rádio (perguntar ao
+   usuário se usam).
 5. Engenharia reversa de faturamento (14/10/2026): resultados em
    `docs/operand/midia.md` (2.8) e `producao.md` (2.9); registro técnico em
    `C:\Users\Iberika\operand-rea\saida\rea\achados-faturamento.md`. O legado
