@@ -268,8 +268,8 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      passam pelo caixa da agência viram lançamento; a mídia fica travada,
      com retrato (snapshot) de cliente, veículo e valores; reabrir o
      faturamento cancela as faturas se nenhuma foi quitada.
-     Pendente na mídia: PDF do PI, tabelas de preço de TV/rádio, regra de
-     projeto oculto nas mídias.
+     Pendente na mídia: regra de projeto oculto nas mídias. (PDF do PI feito
+     em 19/10; tabelas de preço de TV/rádio descartadas em 20/10.)
    - `finance` (15/10/2026): receitas e despesas à vista, parceladas (sobra
      dos centavos na última; datas mensais sem pular mês) ou recorrentes;
      acréscimos e descontos (só à vista); quitar (em lote, só um tipo),
@@ -300,8 +300,9 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      `backend/tsconfig.json` ganhou `useDefineForClassFields: false`: sem
      isso, campos opcionais dos DTOs viravam `undefined` e apagavam valores
      em `{ ...atual, ...entrada }`.
-     Pendente na produção: PDFs (orçamento e PP), textos padrão no front,
-     tela de configurações (encargos, status, textos).
+     Produção descartada em 20/10/2026 (não usada pela agência): PDFs do
+     orçamento e do PP, textos padrão e tela de configurações não serão
+     feitos.
    - `files` (15/10/2026): anexos de projetos, jobs, tarefas, mídias,
      produções, cadastros e lançamentos. Cada módulo dono registra um
      resolvedor na fachada de `files` (`registerOwner`, em `onModuleInit`)
@@ -390,10 +391,16 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      VPS com `git pull` e `up --build`). **Não testado com Docker de
      verdade** (o Docker não está instalado na máquina do usuário): conferir
      no primeiro deploy, principalmente a conexão SSL com o Supabase.
-   Falta (a integração com o Claude, módulo `ai`, fica por último, a pedido
-   do usuário em 15/10/2026): o módulo `ai`; PDFs da produção e tela de
-   configurações da produção; tabelas de preço de TV/rádio (perguntar ao
-   usuário se usam).
+   Falta: o módulo `ai` (integração com o Claude), que fica por último, a
+   pedido do usuário em 15/10/2026.
+   Descartado em 20/10/2026 (o usuário confirmou que a agência não usa a
+   Produção nem as tabelas de preço): PDFs do orçamento e do PP da produção,
+   tela de configurações da produção e tabelas de preço de TV/rádio da mídia.
+   Agentes (`.claude/agents/`, 20/10/2026): `backend`, `frontend`, `testes`,
+   `seguranca` (auditoria defensiva do próprio operador) e
+   `verificador-requisitos` (confere o CLAUDE.md contra o código, só leitura).
+   O usuário recusou "agentes de invasão": ferramenta ofensiva sem alvo nem
+   escopo, não feita.
 5. Engenharia reversa de faturamento (14/10/2026): resultados em
    `docs/operand/midia.md` (2.8) e `producao.md` (2.9); registro técnico em
    `C:\Users\Iberika\operand-rea\saida\rea\achados-faturamento.md`. O legado
