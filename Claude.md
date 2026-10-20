@@ -226,7 +226,11 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      `OWNER_EMAIL`/`OWNER_PASSWORD`). O perfil "Conversa" ficou de fora (só dá
      acesso a Conversas, fora da v1).
    - Backend ligado no `app.module.ts`: `auth` (login, refresh rotativo, troca
-     de senha, usuários com senha provisória, perfis, equipes, colaboradores,
+     de senha, usuários com senha provisória; endurecido em 20/10: 3 erros por
+     e-mail + IP bloqueiam 15 min (em memória, `trust proxy` só da rede
+     privada), senha provisória cobrada na API (claim `mcp`, 403 fora de
+     troca de senha/me/logout), reuso de refresh derruba todas as sessões e
+     o front renova uma vez por vez entre abas (Web Locks); perfis, equipes, colaboradores,
      funções; guard de permissões `@RequireAccess`/`@RequireAdministrator`/
      `@LoadAccess` em `auth/public`, cache de 30 s; o dono é sempre
      administrador), `crm` (pessoas com papéis, CPF/CNPJ validado e sem

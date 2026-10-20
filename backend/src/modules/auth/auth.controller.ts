@@ -5,9 +5,11 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  Ip,
   NotFoundException,
   Post,
 } from '@nestjs/common';
+import { AllowPendingPassword } from '../../shared/auth/allow-pending-password.decorator.js';
 import type { AuthUser } from '../../shared/auth/auth-user.js';
 import { CurrentUser } from '../../shared/auth/current-user.decorator.js';
 import { Public } from '../../shared/auth/public.decorator.js';
@@ -31,8 +33,8 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() body: LoginDto): Promise<SessionTokens> {
-    return this.auth.login(body.email, body.password);
+  login(@Body() body: LoginDto, @Ip() ip: string): Promise<SessionTokens> {
+    return this.auth.login(body.email, body.password, ip);
   }
 
   @Public()
@@ -50,6 +52,7 @@ export class AuthController {
   }
 
   /** Troca a própria senha (obrigatório no primeiro acesso). */
+  @AllowPendingPassword()
   @Post('password')
   @HttpCode(HttpStatus.OK)
   changePassword(
@@ -63,6 +66,7 @@ export class AuthController {
     );
   }
 
+  @AllowPendingPassword()
   @Get('me')
   async me(@CurrentUser() current: AuthUser): Promise<{
     user: UserSummary & { mustChangePassword: boolean; isOwner: boolean };

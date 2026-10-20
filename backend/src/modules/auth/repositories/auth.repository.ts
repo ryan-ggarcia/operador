@@ -38,7 +38,11 @@ export interface AuthRepository {
   findUsersWithPermissions(ids: string[]): Promise<UserWithPermissions[]>;
   findHourlyRate(userId: string): Promise<number | null>;
   markLogin(userId: string, at: Date): Promise<void>;
-  /** Grava a senha nova, tira a troca obrigatória e revoga os refresh tokens. */
+  /**
+   * Grava a senha nova, tira a troca obrigatória e apaga os refresh tokens
+   * (apagar, não revogar: um token antigo usado depois não conta como reuso
+   * e não derruba a sessão nova).
+   */
   updatePassword(userId: string, passwordHash: string): Promise<void>;
   saveRefreshToken(
     userId: string,
@@ -47,4 +51,6 @@ export interface AuthRepository {
   ): Promise<void>;
   findRefreshToken(tokenHash: string): Promise<StoredRefreshToken | null>;
   revokeRefreshToken(id: string, at: Date): Promise<void>;
+  /** Revoga todos os refresh tokens ativos do usuário. */
+  revokeUserRefreshTokens(userId: string, at: Date): Promise<void>;
 }

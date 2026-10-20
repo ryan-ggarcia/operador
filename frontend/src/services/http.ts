@@ -139,18 +139,23 @@ export class HttpClient {
     }
 
     if (response.status === 401 && !options.anonymous && retry) {
-      if (await this.refresh()) return this.send(method, path, options, false);
+      if (await this.refresh(token)) return this.send(method, path, options, false);
       this.tokens.set(null);
       this.onSessionExpired();
     }
     return response;
   }
 
-  /** Renova o token uma vez só, mesmo com várias requisições ao mesmo tempo. */
-  private refresh(): Promise<boolean> {
-    this.refreshing ??= (async () => {
+  /**
+   * Renova o token uma vez só, mesmo com várias requisições ou abas ao mesmo
+   * tempo: o back trata refresh reusado como roubo e derruba todas as sessões.
+   */
+  private refresh(rejectedToken: string | null | undefined): Promise<boolean> {
+    this.refreshing ??= withRefreshLock(async () => {
       const current = this.tokens.get();
       if (!current) return false;
+      // Outra aba já renovou enquanto esperávamos: usa o token novo.
+      if (current.accessToken !== rejectedToken) return true;
       try {
         const session = await this.request<Tokens>('POST', '/auth/refresh', {
           body: { refreshToken: current.refreshToken },
@@ -160,12 +165,18 @@ export class HttpClient {
         return true;
       } catch {
         return false;
-      } finally {
-        this.refreshing = null;
       }
-    })();
+    }).finally(() => {
+      this.refreshing = null;
+    });
     return this.refreshing;
   }
+}
+
+/** Uma renovação por vez entre as abas do navegador (Web Locks). */
+function withRefreshLock(task: () => Promise<boolean>): Promise<boolean> {
+  if (typeof navigator === 'undefined' || !navigator.locks) return task();
+  return navigator.locks.request('operador-auth-refresh', task);
 }
 
 /** Tokens no localStorage do navegador. */

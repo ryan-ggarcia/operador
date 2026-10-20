@@ -177,10 +177,7 @@ export class PrismaUserAdminRepository implements UserAdminRepository {
         where: { id },
         data: { passwordHash, mustChangePassword: mustChange },
       }),
-      this.prisma.refreshToken.updateMany({
-        where: { userId: id, revokedAt: null },
-        data: { revokedAt: new Date() },
-      }),
+      this.prisma.refreshToken.deleteMany({ where: { userId: id } }),
     ]);
   }
 

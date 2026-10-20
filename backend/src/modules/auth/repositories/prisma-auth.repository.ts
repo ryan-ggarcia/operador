@@ -83,10 +83,7 @@ export class PrismaAuthRepository implements AuthRepository {
         where: { id: userId },
         data: { passwordHash, mustChangePassword: false },
       }),
-      this.prisma.refreshToken.updateMany({
-        where: { userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      }),
+      this.prisma.refreshToken.deleteMany({ where: { userId } }),
     ]);
   }
 
@@ -110,6 +107,13 @@ export class PrismaAuthRepository implements AuthRepository {
   async revokeRefreshToken(id: string, at: Date): Promise<void> {
     await this.prisma.refreshToken.update({
       where: { id },
+      data: { revokedAt: at },
+    });
+  }
+
+  async revokeUserRefreshTokens(userId: string, at: Date): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
       data: { revokedAt: at },
     });
   }

@@ -73,7 +73,7 @@ export interface UserAdminRepository {
   collaboratorHasUser(collaboratorId: string): Promise<boolean>;
   createUser(data: NewUser): Promise<UserRecord>;
   updateUser(id: string, changes: UserChanges): Promise<UserRecord>;
-  /** Grava a senha nova e revoga todos os refresh tokens do usuário. */
+  /** Grava a senha nova e apaga os refresh tokens do usuário (ver AuthRepository.updatePassword). */
   setPassword(id: string, passwordHash: string, mustChange: boolean): Promise<void>;
 
   listProfiles(): Promise<AccessProfileRecord[]>;

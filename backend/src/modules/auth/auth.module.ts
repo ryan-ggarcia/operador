@@ -9,6 +9,8 @@ import {
   PERMISSIONS_CACHE_TTL_MS,
 } from './domain/permissions-cache.js';
 import { TtlCache } from './domain/ttl-cache.js';
+import { InMemoryLoginAttempts } from './login-attempts/in-memory-login-attempts.js';
+import { LOGIN_ATTEMPTS } from './login-attempts/login-attempts.js';
 import { PASSWORD_HASHER } from './password/password-hasher.js';
 import { ScryptPasswordHasher } from './password/scrypt-password-hasher.js';
 import { AccessGuard } from './public/access.js';
@@ -44,6 +46,7 @@ import { UsersService } from './users/users.service.js';
     { provide: USER_ADMIN_REPOSITORY, useClass: PrismaUserAdminRepository },
     { provide: COLLABORATOR_REPOSITORY, useClass: PrismaCollaboratorRepository },
     { provide: PASSWORD_HASHER, useClass: ScryptPasswordHasher },
+    { provide: LOGIN_ATTEMPTS, useFactory: () => new InMemoryLoginAttempts() },
     {
       provide: PERMISSIONS_CACHE,
       useFactory: () => new TtlCache(PERMISSIONS_CACHE_TTL_MS),
