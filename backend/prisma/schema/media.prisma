@@ -181,7 +181,9 @@ model MediaLine {
   dailyInsertions Json?
   insertions      Int       @default(0)
   unitValue       Decimal   @default(0) @db.Decimal(14, 2)
-  discountPercent Decimal   @default(0) @db.Decimal(7, 4)
+  /// Desconto da linha: % sobre quantidade × unitário, ou valor da linha inteira.
+  discountType    ValueType @default(PERCENT)
+  discountValue   Decimal   @default(0) @db.Decimal(14, 4)
   subtotal        Decimal   @default(0) @db.Decimal(14, 2)
   isBonus         Boolean   @default(false)
   order           Int       @default(0)

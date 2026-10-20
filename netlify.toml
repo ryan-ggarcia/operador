@@ -1,0 +1,4 @@
+# Front no Netlify. NEXT_PUBLIC_API_URL fica nas variáveis do site (painel do Netlify).
+[build]
+  command = "npm run build --workspace frontend"
+  publish = "frontend/.next"

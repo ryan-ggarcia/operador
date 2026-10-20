@@ -18,7 +18,7 @@
 
 | Módulo | Schema | Responsabilidade | Origem no Operand |
 |---|---|---|---|
-| `auth` | `auth` | Usuários, login/JWT, perfis de acesso e níveis por módulo, colaboradores (dados de RH e valor/hora), funções e equipes | Usuários e permissões, Colaboradores, Equipes |
+| `auth` | `access` (o Supabase reserva `auth`) | Usuários, login/JWT, perfis de acesso e níveis por módulo, colaboradores (dados de RH e valor/hora), funções e equipes | Usuários e permissões, Colaboradores, Equipes |
 | `crm` | `crm` | Cadastro único de pessoas com papéis (cliente, fornecedor, prestador, veículo), contatos, departamentos, grupos de clientes | Cadastros |
 | `projects` | `projects` | Projetos, jobs, tarefas, status, briefings, comentários, aprovação de peças, templates, numeração dos documentos | Projetos, Jobs |
 | `timesheet` | `timesheet` | Apontamentos de horas (cronômetro e manual), jornadas de trabalho | Timesheet |
@@ -173,7 +173,7 @@ produção para quando a agência quiser.
 
 | Tabela | Campos principais | Observações |
 |---|---|---|
-| `bill` | installmentGroupId, kind (revenue, expense), partyType (client, supplier, provider, vehicle, collaborator), partyId, title, categoryId, accountId, paymentMethodId, amount, additions, discounts, finalAmount, dueDate, paidAt, competenceDate, billingDate, installmentNumber, installmentCount, condition (single, installments, recurring), documentNumber, referenceNumber, clientId, **sourceType** (manual, media, production, project, job), **sourceId**, projectId, statusId, situation (open, paid, canceled), createdById | `partyId` aponta para `crm.party` ou, se `collaborator`, para `auth.collaborator` |
+| `bill` | installmentGroupId, kind (revenue, expense), partyType (client, supplier, provider, vehicle, collaborator), partyId, title, categoryId, accountId, paymentMethodId, amount, additions, discounts, finalAmount, dueDate, paidAt, competenceDate, billingDate, installmentNumber, installmentCount, condition (single, installments, recurring), documentNumber, referenceNumber, clientId, **sourceType** (manual, media, production, project, job), **sourceId**, **invoiceClass** (classe da fatura de mídia/produção: agência recebe comissão do cliente, agência paga o líquido ao terceiro etc.; ver [midia.md](operand/midia.md#28-cálculos-da-grade-e-do-faturamento-código-engenharia-reversa)), projectId, statusId, situation (open, paid, canceled), createdById | `partyId` aponta para `crm.party` ou, se `collaborator`, para `auth.collaborator` |
 | `bill_cost_center` | billId, costCenterId, amount, percent | Rateio |
 | `bill_adjustment` | billId, adjustmentTypeId, amount | Acréscimos e descontos |
 | `transfer` | title, fromAccountId, toAccountId, date, amount, outBillId, inBillId, scheduled | Gera o par saída/entrada |
@@ -214,10 +214,9 @@ quitada.
 
 ### 3.11 `ai`
 
-| Tabela | Campos principais | Observações |
-|---|---|---|
-| `conversation` | userId, title, createdAt | |
-| `message` | conversationId, role, content (JSON), toolCalls (JSON), model, inputTokens, outputTokens, createdAt | Base para controlar custo da Claude API |
+Sem tabelas: o assistente não guarda conversa (o histórico fica só no front).
+As tabelas `conversation` e `message` do modelo inicial foram tiradas da
+migração inicial em 20/10/2026, antes de existir qualquer banco.
 
 ---
 

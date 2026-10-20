@@ -1,10 +1,37 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { ConfigModule } from '@nestjs/config';
+import { AiModule } from './modules/ai/public/index.js';
+import { AuthModule } from './modules/auth/public/index.js';
+import { CrmModule } from './modules/crm/public/index.js';
+import { FilesModule } from './modules/files/public/index.js';
+import { FinanceModule } from './modules/finance/public/index.js';
+import { MediaModule } from './modules/media/public/index.js';
+import { NotificationsModule } from './modules/notifications/public/index.js';
+import { ProductionModule } from './modules/production/public/index.js';
+import { ProjectsModule } from './modules/projects/public/index.js';
+import { SettingsModule } from './modules/settings/public/index.js';
+import { TimesheetModule } from './modules/timesheet/public/index.js';
+import { SharedAuthModule } from './shared/auth/shared-auth.module.js';
+import { HealthController } from './shared/health/health.controller.js';
+import { PrismaModule } from './shared/prisma/prisma.module.js';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    SharedAuthModule,
+    AuthModule,
+    FilesModule,
+    NotificationsModule,
+    CrmModule,
+    SettingsModule,
+    ProjectsModule,
+    TimesheetModule,
+    MediaModule,
+    FinanceModule,
+    ProductionModule,
+    AiModule,
+  ],
+  controllers: [HealthController],
 })
 export class AppModule {}

@@ -3,3 +3,9 @@ node_modules
 .env
 
 /src/generated/prisma
+/dist
+/coverage
+*.tsbuildinfo
+
+# Anexos do storage local (desenvolvimento)
+/storage

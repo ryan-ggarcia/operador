@@ -39,6 +39,21 @@ enum BillSourceType {
   @@schema("finance")
 }
 
+/// Classe da fatura gerada por mídia ou produção (ver docs/operand/midia.md, 2.8).
+/// As faturas em que o terceiro recebe direto do cliente não entram aqui:
+/// ficam só como informação no documento de origem.
+enum BillInvoiceClass {
+  AGENCY_RECEIVES_COMMISSION_CLIENT
+  AGENCY_RECEIVES_COMMISSION_THIRD_PARTY
+  AGENCY_RECEIVES_NET_CLIENT
+  AGENCY_RECEIVES_TOTAL_CLIENT
+  AGENCY_PAYS_NET_THIRD_PARTY
+  AGENCY_PAYS_TOTAL_THIRD_PARTY
+  FEE
+
+  @@schema("finance")
+}
+
 enum BillSituation {
   OPEN
   PAID
@@ -55,40 +70,41 @@ enum CategoryKind {
 }
 
 model Bill {
-  id                 String         @id @default(uuid(7)) @db.Uuid
+  id                 String            @id @default(uuid(7)) @db.Uuid
   /// Une as parcelas de um mesmo lançamento.
-  installmentGroupId String?        @db.Uuid
+  installmentGroupId String?           @db.Uuid
   kind               BillKind
   partyType          BillPartyType
-  partyId            String         @db.Uuid
+  partyId            String            @db.Uuid
   title              String
-  categoryId         String         @db.Uuid
-  accountId          String         @db.Uuid
-  paymentMethodId    String         @db.Uuid
-  amount             Decimal        @db.Decimal(14, 2)
-  additions          Decimal        @default(0) @db.Decimal(14, 2)
-  discounts          Decimal        @default(0) @db.Decimal(14, 2)
-  finalAmount        Decimal        @db.Decimal(14, 2)
-  dueDate            DateTime       @db.Date
-  paidAt             DateTime?      @db.Date
-  competenceDate     DateTime?      @db.Date
-  billingDate        DateTime?      @db.Date
-  installmentNumber  Int            @default(1)
-  installmentCount   Int            @default(1)
-  condition          BillCondition  @default(SINGLE)
+  categoryId         String            @db.Uuid
+  accountId          String            @db.Uuid
+  paymentMethodId    String            @db.Uuid
+  amount             Decimal           @db.Decimal(14, 2)
+  additions          Decimal           @default(0) @db.Decimal(14, 2)
+  discounts          Decimal           @default(0) @db.Decimal(14, 2)
+  finalAmount        Decimal           @db.Decimal(14, 2)
+  dueDate            DateTime          @db.Date
+  paidAt             DateTime?         @db.Date
+  competenceDate     DateTime?         @db.Date
+  billingDate        DateTime?         @db.Date
+  installmentNumber  Int               @default(1)
+  installmentCount   Int               @default(1)
+  condition          BillCondition     @default(SINGLE)
   documentNumber     String?
   referenceNumber    String?
-  clientId           String?        @db.Uuid
-  sourceType         BillSourceType @default(MANUAL)
-  sourceId           String?        @db.Uuid
-  projectId          String?        @db.Uuid
-  statusId           String?        @db.Uuid
-  situation          BillSituation  @default(OPEN)
+  clientId           String?           @db.Uuid
+  sourceType         BillSourceType    @default(MANUAL)
+  sourceId           String?           @db.Uuid
+  invoiceClass       BillInvoiceClass?
+  projectId          String?           @db.Uuid
+  statusId           String?           @db.Uuid
+  situation          BillSituation     @default(OPEN)
   notes              String?
-  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
-  updatedAt          DateTime       @updatedAt @db.Timestamptz(3)
-  createdById        String?        @db.Uuid
-  updatedById        String?        @db.Uuid
+  createdAt          DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime          @updatedAt @db.Timestamptz(3)
+  createdById        String?           @db.Uuid
+  updatedById        String?           @db.Uuid
 
   category      Category         @relation(fields: [categoryId], references: [id])
   account       Account          @relation(fields: [accountId], references: [id])

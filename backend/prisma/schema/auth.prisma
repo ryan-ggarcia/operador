@@ -5,7 +5,7 @@ enum PersonType {
   PF
   PJ
 
-  @@schema("auth")
+  @@schema("access")
 }
 
 model UserAccount {
@@ -35,7 +35,7 @@ model UserAccount {
   refreshTokens RefreshToken[]
 
   @@map("user_account")
-  @@schema("auth")
+  @@schema("access")
 }
 
 model AccessProfile {
@@ -50,7 +50,7 @@ model AccessProfile {
   users UserAccount[]
 
   @@map("access_profile")
-  @@schema("auth")
+  @@schema("access")
 }
 
 /// Dados de RH: acesso restrito e nunca enviados ao Claude.
@@ -86,7 +86,7 @@ model Collaborator {
   user     UserAccount?
 
   @@map("collaborator")
-  @@schema("auth")
+  @@schema("access")
 }
 
 model Position {
@@ -97,7 +97,7 @@ model Position {
   collaborators Collaborator[]
 
   @@map("position")
-  @@schema("auth")
+  @@schema("access")
 }
 
 model Team {
@@ -108,7 +108,7 @@ model Team {
   members TeamMember[]
 
   @@map("team")
-  @@schema("auth")
+  @@schema("access")
 }
 
 model TeamMember {
@@ -120,7 +120,7 @@ model TeamMember {
 
   @@id([teamId, userId])
   @@map("team_member")
-  @@schema("auth")
+  @@schema("access")
 }
 
 model RefreshToken {
@@ -135,7 +135,7 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_token")
-  @@schema("auth")
+  @@schema("access")
 }
 
 model AuthHistory {
@@ -151,5 +151,5 @@ model AuthHistory {
 
   @@index([entityType, entityId])
   @@map("history")
-  @@schema("auth")
+  @@schema("access")
 }

@@ -1,0 +1,2 @@
+# Checksum das migrações do Prisma igual em Windows e Linux.
+*.sql text eol=lf

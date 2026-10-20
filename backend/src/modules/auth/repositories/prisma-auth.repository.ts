@@ -77,6 +77,16 @@ export class PrismaAuthRepository implements AuthRepository {
     });
   }
 
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.userAccount.update({
+        where: { id: userId },
+        data: { passwordHash, mustChangePassword: false },
+      }),
+      this.prisma.refreshToken.deleteMany({ where: { userId } }),
+    ]);
+  }
+
   async saveRefreshToken(
     userId: string,
     tokenHash: string,
@@ -97,6 +107,13 @@ export class PrismaAuthRepository implements AuthRepository {
   async revokeRefreshToken(id: string, at: Date): Promise<void> {
     await this.prisma.refreshToken.update({
       where: { id },
+      data: { revokedAt: at },
+    });
+  }
+
+  async revokeUserRefreshTokens(userId: string, at: Date): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
       data: { revokedAt: at },
     });
   }
