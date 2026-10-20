@@ -12,8 +12,6 @@ export const ROLE_MODULE: Record<PartyRole, PermissionModule> = {
 
 export const PARTY_ROLES = Object.keys(ROLE_MODULE) as PartyRole[];
 
-export const CRM_MODULES = Object.values(ROLE_MODULE);
-
 /** Papéis que o usuário pode ver (nível 1 ou mais). */
 export function readableRoles(permissions: UserPermissions): PartyRole[] {
   return PARTY_ROLES.filter((role) => permissions.modules[ROLE_MODULE[role]] > 0);

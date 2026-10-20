@@ -14,13 +14,11 @@ import type { AuthUser } from '../../../shared/auth/auth-user.js';
 import { CurrentUser } from '../../../shared/auth/current-user.decorator.js';
 import {
   CurrentAccess,
-  FULL,
   LoadAccess,
-  RequireAccess,
+  RequireAdministrator,
   type UserPermissions,
 } from '../../auth/public/index.js';
 import { CatalogService } from '../catalog/catalog.service.js';
-import { CRM_MODULES } from '../domain/party-access.js';
 import {
   CatalogItemDto,
   ContactListDto,
@@ -101,6 +99,7 @@ export class PartiesController {
   }
 
   @Post()
+  @RequireAdministrator()
   create(
     @CurrentAccess() access: UserPermissions,
     @CurrentUser() user: AuthUser,
@@ -110,6 +109,7 @@ export class PartiesController {
   }
 
   @Patch(':id')
+  @RequireAdministrator()
   update(
     @CurrentAccess() access: UserPermissions,
     @CurrentUser() user: AuthUser,
@@ -120,6 +120,7 @@ export class PartiesController {
   }
 
   @Post(':id/activate')
+  @RequireAdministrator()
   @HttpCode(HttpStatus.OK)
   activate(
     @CurrentAccess() access: UserPermissions,
@@ -130,6 +131,7 @@ export class PartiesController {
   }
 
   @Post(':id/deactivate')
+  @RequireAdministrator()
   @HttpCode(HttpStatus.OK)
   deactivate(
     @CurrentAccess() access: UserPermissions,
@@ -149,6 +151,7 @@ export class PartiesController {
   }
 
   @Post(':id/contacts')
+  @RequireAdministrator()
   createContact(
     @CurrentAccess() access: UserPermissions,
     @Param('id', ParseUUIDPipe) id: string,
@@ -163,6 +166,7 @@ export class PartiesController {
   }
 
   @Post(':id/notes')
+  @RequireAdministrator()
   addNote(
     @CurrentAccess() access: UserPermissions,
     @CurrentUser() user: AuthUser,
@@ -179,6 +183,7 @@ export class ContactsController {
   constructor(private readonly parties: PartiesService) {}
 
   @Patch(':id')
+  @RequireAdministrator()
   update(
     @CurrentAccess() access: UserPermissions,
     @Param('id', ParseUUIDPipe) id: string,
@@ -194,6 +199,7 @@ export class PartyNotesController {
   constructor(private readonly parties: PartiesService) {}
 
   @Patch(':id')
+  @RequireAdministrator()
   update(
     @CurrentUser() user: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -214,13 +220,13 @@ export class ClientGroupsController {
   }
 
   @Post()
-  @RequireAccess('clients', FULL)
+  @RequireAdministrator()
   create(@Body() body: CatalogItemDto) {
     return this.catalog.create('clientGroup', body.name);
   }
 
   @Patch(':id')
-  @RequireAccess('clients', FULL)
+  @RequireAdministrator()
   update(@Param('id', ParseUUIDPipe) id: string, @Body() body: UpdateCatalogItemDto) {
     return this.catalog.update('clientGroup', id, body);
   }
@@ -237,13 +243,13 @@ export class DepartmentsController {
   }
 
   @Post()
-  @RequireAccess(CRM_MODULES, FULL)
+  @RequireAdministrator()
   create(@Body() body: CatalogItemDto) {
     return this.catalog.create('department', body.name);
   }
 
   @Patch(':id')
-  @RequireAccess(CRM_MODULES, FULL)
+  @RequireAdministrator()
   update(@Param('id', ParseUUIDPipe) id: string, @Body() body: UpdateCatalogItemDto) {
     return this.catalog.update('department', id, body);
   }

@@ -72,7 +72,7 @@ const NAV: NavItem[] = [
     href: '/cadastros',
     label: 'Cadastros',
     icon: BriefcaseBusiness,
-    modules: ['clients', 'suppliers', 'providers', 'vehicles'],
+    administrator: true,
   },
   {
     href: '/configuracoes',
