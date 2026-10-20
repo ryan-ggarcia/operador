@@ -31,6 +31,7 @@ interface RequestOptions {
   query?: Query;
   /** Rotas públicas (login, refresh) não mandam o token. */
   anonymous?: boolean;
+  signal?: AbortSignal;
 }
 
 function toMessage(data: unknown, status: number): string {
@@ -90,13 +91,38 @@ export class HttpClient {
     return this.request<T>('POST', path, { body: form });
   }
 
-  async request<T>(method: string, path: string, options: RequestOptions, retry = true): Promise<T> {
+  async request<T>(method: string, path: string, options: RequestOptions): Promise<T> {
+    const response = await this.send(method, path, options);
+    const text = await response.text();
+    const data: unknown = text ? JSON.parse(text) : undefined;
+    if (!response.ok) throw new ApiError(response.status, toMessage(data, response.status), data);
+    return data as T;
+  }
+
+  /** POST com resposta em stream (text/event-stream); erro HTTP vira ApiError. */
+  async stream(path: string, body: unknown, signal: AbortSignal): Promise<ReadableStream<Uint8Array>> {
+    const response = await this.send('POST', path, { body, signal });
+    if (!response.ok || !response.body) {
+      let data: unknown;
+      try {
+        data = JSON.parse(await response.text());
+      } catch {
+        data = undefined;
+      }
+      throw new ApiError(response.status, toMessage(data, response.status), data);
+    }
+    return response.body;
+  }
+
+  /** Faz a requisição com o token e, se der 401, renova e tenta mais uma vez. */
+  private async send(method: string, path: string, options: RequestOptions, retry = true): Promise<Response> {
     const token = options.anonymous ? null : this.tokens.get()?.accessToken;
     const isForm = options.body instanceof FormData;
     let response: Response;
     try {
       response = await fetch(this.baseUrl + path + buildQuery(options.query), {
         method,
+        signal: options.signal,
         headers: {
           ...(options.body === undefined || isForm ? {} : { 'content-type': 'application/json' }),
           ...(token ? { authorization: `Bearer ${token}` } : {}),
@@ -107,20 +133,17 @@ export class HttpClient {
             ? undefined
             : JSON.stringify(options.body),
       });
-    } catch {
+    } catch (caught) {
+      if (options.signal?.aborted) throw caught;
       throw new ApiError(0, 'Sem conexão com o servidor.');
     }
 
     if (response.status === 401 && !options.anonymous && retry) {
-      if (await this.refresh()) return this.request<T>(method, path, options, false);
+      if (await this.refresh()) return this.send(method, path, options, false);
       this.tokens.set(null);
       this.onSessionExpired();
     }
-
-    const text = await response.text();
-    const data: unknown = text ? JSON.parse(text) : undefined;
-    if (!response.ok) throw new ApiError(response.status, toMessage(data, response.status), data);
-    return data as T;
+    return response;
   }
 
   /** Renova o token uma vez só, mesmo com várias requisições ao mesmo tempo. */
@@ -129,12 +152,10 @@ export class HttpClient {
       const current = this.tokens.get();
       if (!current) return false;
       try {
-        const session = await this.request<Tokens>(
-          'POST',
-          '/auth/refresh',
-          { body: { refreshToken: current.refreshToken }, anonymous: true },
-          false,
-        );
+        const session = await this.request<Tokens>('POST', '/auth/refresh', {
+          body: { refreshToken: current.refreshToken },
+          anonymous: true,
+        });
         this.tokens.set({ accessToken: session.accessToken, refreshToken: session.refreshToken });
         return true;
       } catch {

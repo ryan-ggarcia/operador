@@ -12,6 +12,7 @@ import {
   Timer,
   Menu,
   Settings,
+  Sparkles,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -34,7 +35,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useResource } from '@/hooks/use-resource';
 import { initials } from '@/lib/format';
+import { api } from '@/services';
 import type { PermissionModule } from '@/services/types';
 
 interface NavItem {
@@ -43,6 +46,8 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   modules?: PermissionModule[];
   administrator?: boolean;
+  /** Some quando o assistente não está configurado no servidor. */
+  ai?: boolean;
 }
 
 const NAV: NavItem[] = [
@@ -62,6 +67,7 @@ const NAV: NavItem[] = [
     icon: Timer,
     modules: ['jobs', 'medias', 'productions'],
   },
+  { href: '/assistente', label: 'Assistente', icon: Sparkles, ai: true },
   {
     href: '/cadastros',
     label: 'Cadastros',
@@ -79,8 +85,13 @@ const NAV: NavItem[] = [
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { can, permissions } = useAuth();
+  const ai = useResource(() => api.ai.status(), []);
   const items = NAV.filter((item) =>
-    item.administrator ? permissions?.flags.administrator : !item.modules || item.modules.some((module) => can(module)),
+    item.ai
+      ? ai.data?.enabled !== false
+      : item.administrator
+        ? permissions?.flags.administrator
+        : !item.modules || item.modules.some((module) => can(module)),
   );
   return (
     <nav className="flex flex-col gap-1">

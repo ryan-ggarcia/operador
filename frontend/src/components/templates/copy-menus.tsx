@@ -1,6 +1,7 @@
 'use client';
 
-import { CalendarClock, Copy, LayoutTemplate, Loader2, MoreVertical, Repeat, Save } from 'lucide-react';
+import { CalendarClock, Copy, LayoutTemplate, Loader2, MoreVertical, Repeat, Save, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -295,6 +296,11 @@ export function JobCopyMenu({ job, onChanged }: { job: JobDetail; onChanged: () 
               <Save /> Salvar como template
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem asChild>
+            <Link href={`/assistente?job=${job.id}`}>
+              <Sparkles /> Analisar com o assistente
+            </Link>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 

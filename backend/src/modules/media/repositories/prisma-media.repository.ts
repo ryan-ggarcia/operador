@@ -163,6 +163,8 @@ export class PrismaMediaRepository implements MediaRepository {
       vehicleId: filter.vehicleId,
       projectId: filter.projectId,
       statusId: filter.statusIds?.length ? { in: filter.statusIds } : undefined,
+      createdAt:
+        filter.createdFrom || filter.createdTo ? { gte: filter.createdFrom, lte: filter.createdTo } : undefined,
     };
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.media.findMany({

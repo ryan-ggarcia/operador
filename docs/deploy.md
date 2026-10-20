@@ -36,6 +36,8 @@ cinza) para o Caddy emitir o certificado.
 
 Teste: `https://API_DOMAIN/health` responde `{"status":"ok","database":"ok"}`.
 
+Assistente (Claude): pôr a chave de console.anthropic.com em `ANTHROPIC_API_KEY` no `deploy/.env` (vazio = assistente desligado; `AI_MODEL` é opcional).
+
 ## 3. GitHub (uma vez)
 
 Em Settings › Secrets and variables › Actions, criar:

@@ -1,5 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { RunningTimer, TimesheetDocType, TimesheetFacade } from './public/timesheet.facade.js';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { hasLevel, type UserPermissions } from '../auth/public/index.js';
+import { canSeeOthers } from './domain/time-rules.js';
+import { TimeEntriesService } from './entries/time-entries.service.js';
+import type { JobHours, RunningTimer, TimesheetDocType, TimesheetFacade } from './public/timesheet.facade.js';
 import {
   TIME_ENTRY_REPOSITORY,
   type EntryDocType,
@@ -13,7 +16,32 @@ const FROM_ENTRY: Partial<Record<EntryDocType, TimesheetDocType>> = { JOB: 'job'
 export class TimesheetFacadeService implements TimesheetFacade {
   constructor(
     @Inject(TIME_ENTRY_REPOSITORY) private readonly entries: TimeEntryRepository,
+    private readonly timeEntries: TimeEntriesService,
   ) {}
+
+  async getJobHoursForUser(userId: string, access: UserPermissions, jobId: string): Promise<JobHours> {
+    // Mesma exigência do TimesheetController.
+    if (!(['jobs', 'medias', 'productions'] as const).some((module) => hasLevel(access, module, 1))) {
+      throw new ForbiddenException('Sem acesso ao timesheet.');
+    }
+    const summary = await this.timeEntries.documentSummary(userId, access, 'job', jobId);
+    return {
+      estimatedMinutes: summary.estimatedMinutes,
+      realizedMinutes: summary.realizedMinutes,
+      balanceMinutes: summary.balanceMinutes,
+      runningCount: summary.runningUserIds.length,
+      onlyOwnEntries: !canSeeOthers(access),
+      entries: summary.entries.map((entry) => ({
+        user: entry.user?.name ?? null,
+        doc: entry.doc.title,
+        startedAt: entry.startedAt,
+        minutes: entry.minutes,
+        kind: entry.kind,
+        description: entry.description,
+        running: entry.situation === 'RUNNING',
+      })),
+    };
+  }
 
   async getMinutesBySource(docType: TimesheetDocType, ids: string[]): Promise<Record<string, number>> {
     const result: Record<string, number> = Object.fromEntries(ids.map((id) => [id, 0]));

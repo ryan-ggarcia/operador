@@ -126,6 +126,8 @@ export interface MediaFilter {
   projectId?: string;
   statusIds?: string[];
   mine?: boolean;
+  createdFrom?: Date;
+  createdTo?: Date;
   limit: number;
   offset: number;
 }

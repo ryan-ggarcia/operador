@@ -1,11 +1,23 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { htmlToText } from '../../shared/html/sanitize.js';
 import type { UserPermissions } from '../auth/public/index.js';
 import { DocumentLifecycleService } from './document-lifecycle.service.js';
+import { JobsService, type JobView } from './jobs/jobs.service.js';
+import { NamingService } from './naming.service.js';
 import { canViewJob, documentNumber } from './domain/job-rules.js';
 import { canViewProject } from './domain/project-rules.js';
 import type { DocumentLifecycleListener } from './public/lifecycle.js';
 import type {
   DocumentRef,
+  JobBrief,
+  JobDetail,
+  JobSearchQuery,
   JobSummary,
   ProjectDocumentType,
   ProjectsFacade,
@@ -22,6 +34,28 @@ import {
   type ProjectRecord,
   type ProjectRepository,
 } from './repositories/project.repository.js';
+import { STATUS_REPOSITORY, type StatusRepository } from './repositories/status.repository.js';
+
+const BRIEFING_MAX = 4000;
+
+function jobBrief(job: JobView, statusName: (id: string | null) => string | null): JobBrief {
+  return {
+    id: job.id,
+    number: job.number,
+    title: job.title,
+    client: job.client?.name ?? null,
+    project: { id: job.project.id, number: job.project.number, title: job.project.title },
+    responsible: job.responsible?.name ?? null,
+    status: statusName(job.statusId),
+    situation: job.situation,
+    startAt: job.startAt,
+    deadline: job.deadline,
+    overdue: job.overdue,
+    estimatedMinutes: job.estimatedMinutes,
+    openTasks: job.openTasks,
+    totalTasks: job.totalTasks,
+  };
+}
 
 export function toProjectSummary(project: ProjectRecord): ProjectSummary {
   return {
@@ -86,8 +120,70 @@ export class ProjectsFacadeService implements ProjectsFacade {
   constructor(
     @Inject(PROJECT_REPOSITORY) private readonly projects: ProjectRepository,
     @Inject(JOB_REPOSITORY) private readonly jobs: JobRepository,
+    @Inject(STATUS_REPOSITORY) private readonly statuses: StatusRepository,
     private readonly lifecycle: DocumentLifecycleService,
+    private readonly jobService: JobsService,
+    private readonly naming: NamingService,
   ) {}
+
+  async searchJobsForUser(
+    userId: string,
+    access: UserPermissions,
+    query: JobSearchQuery,
+  ): Promise<{ total: number; items: JobBrief[] }> {
+    // Mesma exigência da rota /jobs (@RequireAccess('jobs')).
+    if (access.modules.jobs === 0) throw new ForbiddenException('Sem acesso a jobs.');
+    const statuses = await this.statuses.list('JOB', true);
+    let statusIds: string[] | undefined;
+    if (query.statusName) {
+      const term = query.statusName.trim().toLowerCase();
+      statusIds = statuses.filter((status) => status.name.toLowerCase().includes(term)).map((status) => status.id);
+      if (statusIds.length === 0) {
+        const names = statuses.filter((status) => status.active).map((status) => status.name).join(', ');
+        throw new BadRequestException(`Nenhum status de job com "${query.statusName}". Status: ${names}.`);
+      }
+    }
+    const page = await this.jobService.list(userId, access, {
+      search: query.search,
+      clientId: query.clientId,
+      situations: query.situations,
+      statusIds,
+      overdue: query.overdue,
+      mine: query.mine,
+      limit: query.limit,
+      offset: 0,
+    });
+    const names = new Map(statuses.map((status) => [status.id, status.name]));
+    const statusName = (id: string | null) => (id ? (names.get(id) ?? null) : null);
+    return { total: page.total, items: page.items.map((job) => jobBrief(job, statusName)) };
+  }
+
+  async getJobDetailForUser(userId: string, access: UserPermissions, jobId: string): Promise<JobDetail> {
+    const job = await this.jobService.get(userId, access, jobId);
+    const [statuses, people] = await Promise.all([
+      this.statuses.list('JOB', true),
+      this.naming.resolve({ userIds: job.tasks.map((task) => task.responsibleId) }),
+    ]);
+    const names = new Map(statuses.map((status) => [status.id, status.name]));
+    const statusName = (id: string | null) => (id ? (names.get(id) ?? null) : null);
+    const briefing = job.briefing ? htmlToText(job.briefing).slice(0, BRIEFING_MAX) : null;
+    return {
+      ...jobBrief(job, statusName),
+      requester: job.requester?.name ?? null,
+      members: job.members.map((member) => member.name),
+      briefing: briefing || null,
+      tasks: job.tasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        situation: task.situation,
+        status: statusName(task.statusId),
+        responsible: people.user(task.responsibleId)?.name ?? null,
+        startAt: task.startAt,
+        deadline: task.deadline,
+        blocked: task.blockedByIds.length > 0,
+      })),
+    };
+  }
 
   async getProject(id: string): Promise<ProjectSummary | null> {
     const project = await this.projects.findById(id);

@@ -63,8 +63,66 @@ export interface ReservedSequence {
   number: string;
 }
 
+/** Busca de jobs com as regras da pauta (assistente de IA). */
+export interface JobSearchQuery {
+  /** Título ou número ("123.4"). */
+  search?: string;
+  clientId?: string;
+  /** Parte do nome do status. */
+  statusName?: string;
+  situations?: JobSituation[];
+  overdue?: boolean;
+  /** Só os jobs em que o usuário está envolvido. */
+  mine?: boolean;
+  limit: number;
+}
+
+/** Job resumido, só com nomes (sem ids de pessoas). */
+export interface JobBrief {
+  id: string;
+  number: string;
+  title: string;
+  client: string | null;
+  project: { id: string; number: number; title: string };
+  responsible: string | null;
+  status: string | null;
+  situation: JobSituation;
+  startAt: Date | null;
+  deadline: Date | null;
+  overdue: boolean;
+  estimatedMinutes: number | null;
+  openTasks: number;
+  totalTasks: number;
+}
+
+export interface JobDetail extends JobBrief {
+  requester: string | null;
+  members: string[];
+  /** Briefing em texto puro (cortado em 4.000 caracteres). */
+  briefing: string | null;
+  tasks: {
+    id: string;
+    title: string;
+    situation: JobSituation;
+    status: string | null;
+    responsible: string | null;
+    startAt: Date | null;
+    deadline: Date | null;
+    /** Depende de tarefa ainda aberta (workflow). */
+    blocked: boolean;
+  }[];
+}
+
 /** Interface pública do módulo projects. */
 export interface ProjectsFacade {
+  /** Jobs que o usuário vê na pauta (sem acesso a jobs: erro 403). */
+  searchJobsForUser(
+    userId: string,
+    access: UserPermissions,
+    query: JobSearchQuery,
+  ): Promise<{ total: number; items: JobBrief[] }>;
+  /** Job com tarefas e briefing, se o usuário o vê (senão, 404). */
+  getJobDetailForUser(userId: string, access: UserPermissions, jobId: string): Promise<JobDetail>;
   getProject(id: string): Promise<ProjectSummary | null>;
   getProjects(ids: string[]): Promise<ProjectSummary[]>;
   getJobs(ids: string[]): Promise<JobSummary[]>;

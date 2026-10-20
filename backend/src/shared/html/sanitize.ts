@@ -25,3 +25,13 @@ export function sanitizeRichText(html: string | null | undefined): string | null
   const text = sanitizeHtml(clean, { allowedTags: [], allowedAttributes: {} }).trim();
   return text === '' ? null : clean;
 }
+
+/** Texto puro do texto rico, com quebra de linha no fim de cada bloco. */
+export function htmlToText(html: string): string {
+  return sanitizeHtml(html.replace(/<\/(p|li|h\d|blockquote|pre)>|<br\s*\/?>/gi, '$&\n'), {
+    allowedTags: [],
+    allowedAttributes: {},
+  })
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}

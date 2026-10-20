@@ -1,3 +1,5 @@
+import type { UserPermissions } from '../../auth/public/index.js';
+
 /** Token de injeção da fachada do módulo finance. */
 export const FINANCE_FACADE = Symbol('FINANCE_FACADE');
 
@@ -45,8 +47,28 @@ export interface CashSummary {
   balance: number;
 }
 
+/** Resumo do período como na tela do financeiro, mais o saldo das contas. */
+export interface PeriodSummary {
+  revenuePaid: number;
+  revenueOpen: number;
+  expensePaid: number;
+  expenseOpen: number;
+  /** Em aberto com vencimento antes do período. */
+  overdueRevenue: number;
+  overdueExpense: number;
+  transfers: number;
+  realizedBalance: number;
+  forecastBalance: number;
+  /** Sem leitura total no financeiro, só os lançamentos criados pelo usuário. */
+  onlyOwnBills: boolean;
+  /** Saldo de hoje das contas ativas. */
+  accounts: { name: string; balance: number }[];
+}
+
 /** Interface pública do módulo finance. */
 export interface FinanceFacade {
+  /** Resumo do período (AAAA-MM-DD, fim exclusivo); sem acesso ao financeiro: 403. */
+  getPeriodSummaryForUser(userId: string, access: UserPermissions, from: string, to: string): Promise<PeriodSummary>;
   /**
    * Cria as faturas do documento (conta, forma de pagamento e categoria
    * padrão). Devolve os ids na mesma ordem.

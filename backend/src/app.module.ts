@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AiModule } from './modules/ai/public/index.js';
 import { AuthModule } from './modules/auth/public/index.js';
 import { CrmModule } from './modules/crm/public/index.js';
 import { FilesModule } from './modules/files/public/index.js';
@@ -29,6 +30,7 @@ import { PrismaModule } from './shared/prisma/prisma.module.js';
     MediaModule,
     FinanceModule,
     ProductionModule,
+    AiModule,
   ],
   controllers: [HealthController],
 })

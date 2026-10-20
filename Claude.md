@@ -392,8 +392,19 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      VPS com `git pull` e `up --build`). **Não testado com Docker de
      verdade** (o Docker não está instalado na máquina do usuário): conferir
      no primeiro deploy, principalmente a conexão SSL com o Supabase.
-   Falta: o módulo `ai` (integração com o Claude), que fica por último, a
-   pedido do usuário em 15/10/2026.
+   - `ai` (20/10/2026): `GET /ai/status` e `POST /ai/chat` (SSE no `res`;
+     histórico só texto, 1–40 mensagens, sem conversa salva). Loop manual de
+     tool use com `claude-opus-5-5` (effort medium, `fallbacks: "default"`,
+     até 8 rodadas). 5 ferramentas só de leitura (buscar_jobs, detalhes_job,
+     horas_job, resumo_financeiro, buscar_midias) pelos métodos `*ForUser`
+     das fachadas, com as mesmas permissões das telas (projeto oculto
+     incluído). Sem `ANTHROPIC_API_KEY` o recurso fica desligado. Qualquer
+     usuário logado usa; sem limite de uso. Financeiro nível 1 vê o saldo
+     de todas as contas, como na tela (decisão do usuário). Front:
+     `/assistente`, item no menu e "Analisar com o assistente" no ⋮ do job.
+     Verificado só contra um Claude simulado (`ANTHROPIC_BASE_URL`).
+     **Configuração da Anthropic pausada** a pedido do usuário (20/10): não
+     pedir chave nem testar com a API real até ele retomar.
    Descartado em 20/10/2026 (o usuário confirmou que a agência não usa a
    Produção nem as tabelas de preço): PDFs do orçamento e do PP da produção,
    tela de configurações da produção e tabelas de preço de TV/rádio da mídia.

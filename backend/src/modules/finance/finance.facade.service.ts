@@ -1,7 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { fromCents, toCents } from '../../shared/money/money.js';
+import { hasLevel, READ_ALL, type UserPermissions } from '../auth/public/index.js';
+import { TreasuryService } from './bills/treasury.service.js';
 import type {
   CashSummary,
+  PeriodSummary,
   FinanceFacade,
   FinanceInvoiceClass,
   FinanceSourceType,
@@ -51,7 +54,29 @@ export class FinanceFacadeService implements FinanceFacade {
   constructor(
     @Inject(BILL_REPOSITORY) private readonly bills: BillRepository,
     @Inject(FINANCE_CATALOG_REPOSITORY) private readonly catalog: FinanceCatalogRepository,
+    private readonly treasury: TreasuryService,
   ) {}
+
+  async getPeriodSummaryForUser(
+    userId: string,
+    access: UserPermissions,
+    from: string,
+    to: string,
+  ): Promise<PeriodSummary> {
+    // Mesma exigência do FinanceController (@RequireAccess('financial')).
+    if (!hasLevel(access, 'financial', 1)) throw new ForbiddenException('Sem acesso ao financeiro.');
+    const [summary, accounts] = await Promise.all([
+      this.treasury.summary(userId, access, from, to),
+      this.treasury.listAccounts(),
+    ]);
+    return {
+      ...summary,
+      onlyOwnBills: access.modules.financial < READ_ALL,
+      accounts: accounts
+        .filter((account) => account.active)
+        .map((account) => ({ name: account.name, balance: account.balance })),
+    };
+  }
 
   async createBillsFromSource(
     sourceType: FinanceSourceType,

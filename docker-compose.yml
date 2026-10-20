@@ -34,6 +34,9 @@ services:
       OWNER_EMAIL: dono@agencia.local
       OWNER_NAME: Dono da conta
       OWNER_PASSWORD: troque-esta-senha
+      # Assistente: sem chave fica desligado. Lida do ambiente de quem sobe o compose.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
     ports:
       - '3001:3001'
     volumes:
