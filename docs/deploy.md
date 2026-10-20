@@ -16,6 +16,10 @@ As migrações do banco rodam sozinhas quando a API sobe.
    - Database › Connection string › **Session pooler** (vira `DATABASE_URL`);
    - Settings › API › Project URL (`SUPABASE_URL`) e a chave **service_role**
      (`SUPABASE_SERVICE_ROLE_KEY`; só no servidor, nunca no front).
+4. Opcional: criar as tabelas antes da API subir, colando `deploy/banco.sql` no
+   **SQL Editor** e rodando uma vez (banco vazio). Ele registra as migrações em
+   `_prisma_migrations`, então a API não as roda de novo. Sem isso, a API cria
+   tudo sozinha no primeiro `up`. O seed (passo 2) continua necessário.
 
 ## 2. VPS (uma vez)
 

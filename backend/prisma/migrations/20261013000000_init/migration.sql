@@ -1,8 +1,5 @@
 -- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "ai";
-
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "auth";
+CREATE SCHEMA IF NOT EXISTS "access";
 
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "crm";
@@ -32,7 +29,7 @@ CREATE SCHEMA IF NOT EXISTS "settings";
 CREATE SCHEMA IF NOT EXISTS "timesheet";
 
 -- CreateEnum
-CREATE TYPE "auth"."PersonType" AS ENUM ('PF', 'PJ');
+CREATE TYPE "access"."PersonType" AS ENUM ('PF', 'PJ');
 
 -- CreateEnum
 CREATE TYPE "crm"."PartyPersonType" AS ENUM ('PF', 'PJ');
@@ -113,33 +110,7 @@ CREATE TYPE "timesheet"."TimeEntryKind" AS ENUM ('NORMAL', 'REWORK');
 CREATE TYPE "timesheet"."TimeEntrySituation" AS ENUM ('RUNNING', 'DONE');
 
 -- CreateTable
-CREATE TABLE "ai"."conversation" (
-    "id" UUID NOT NULL,
-    "userId" UUID NOT NULL,
-    "title" TEXT,
-    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
-
-    CONSTRAINT "conversation_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "ai"."message" (
-    "id" UUID NOT NULL,
-    "conversationId" UUID NOT NULL,
-    "role" TEXT NOT NULL,
-    "content" JSONB NOT NULL,
-    "toolCalls" JSONB,
-    "model" TEXT,
-    "inputTokens" INTEGER,
-    "outputTokens" INTEGER,
-    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "message_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "auth"."user_account" (
+CREATE TABLE "access"."user_account" (
     "id" UUID NOT NULL,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
@@ -162,7 +133,7 @@ CREATE TABLE "auth"."user_account" (
 );
 
 -- CreateTable
-CREATE TABLE "auth"."access_profile" (
+CREATE TABLE "access"."access_profile" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "permissions" JSONB NOT NULL,
@@ -174,9 +145,9 @@ CREATE TABLE "auth"."access_profile" (
 );
 
 -- CreateTable
-CREATE TABLE "auth"."collaborator" (
+CREATE TABLE "access"."collaborator" (
     "id" UUID NOT NULL,
-    "personType" "auth"."PersonType" NOT NULL DEFAULT 'PF',
+    "personType" "access"."PersonType" NOT NULL DEFAULT 'PF',
     "name" TEXT NOT NULL,
     "document" TEXT,
     "legalName" TEXT,
@@ -206,7 +177,7 @@ CREATE TABLE "auth"."collaborator" (
 );
 
 -- CreateTable
-CREATE TABLE "auth"."position" (
+CREATE TABLE "access"."position" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT true,
@@ -215,7 +186,7 @@ CREATE TABLE "auth"."position" (
 );
 
 -- CreateTable
-CREATE TABLE "auth"."team" (
+CREATE TABLE "access"."team" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT true,
@@ -224,7 +195,7 @@ CREATE TABLE "auth"."team" (
 );
 
 -- CreateTable
-CREATE TABLE "auth"."team_member" (
+CREATE TABLE "access"."team_member" (
     "teamId" UUID NOT NULL,
     "userId" UUID NOT NULL,
 
@@ -232,7 +203,7 @@ CREATE TABLE "auth"."team_member" (
 );
 
 -- CreateTable
-CREATE TABLE "auth"."refresh_token" (
+CREATE TABLE "access"."refresh_token" (
     "id" UUID NOT NULL,
     "userId" UUID NOT NULL,
     "tokenHash" TEXT NOT NULL,
@@ -244,7 +215,7 @@ CREATE TABLE "auth"."refresh_token" (
 );
 
 -- CreateTable
-CREATE TABLE "auth"."history" (
+CREATE TABLE "access"."history" (
     "id" UUID NOT NULL,
     "entityType" TEXT NOT NULL,
     "entityId" UUID NOT NULL,
@@ -1300,37 +1271,31 @@ CREATE TABLE "timesheet"."user_schedule" (
 );
 
 -- CreateIndex
-CREATE INDEX "conversation_userId_idx" ON "ai"."conversation"("userId");
+CREATE UNIQUE INDEX "user_account_email_key" ON "access"."user_account"("email");
 
 -- CreateIndex
-CREATE INDEX "message_conversationId_idx" ON "ai"."message"("conversationId");
+CREATE UNIQUE INDEX "user_account_collaboratorId_key" ON "access"."user_account"("collaboratorId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_account_email_key" ON "auth"."user_account"("email");
+CREATE UNIQUE INDEX "access_profile_name_key" ON "access"."access_profile"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_account_collaboratorId_key" ON "auth"."user_account"("collaboratorId");
+CREATE UNIQUE INDEX "collaborator_document_key" ON "access"."collaborator"("document");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "access_profile_name_key" ON "auth"."access_profile"("name");
+CREATE UNIQUE INDEX "position_name_key" ON "access"."position"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "collaborator_document_key" ON "auth"."collaborator"("document");
+CREATE UNIQUE INDEX "team_name_key" ON "access"."team"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "position_name_key" ON "auth"."position"("name");
+CREATE UNIQUE INDEX "refresh_token_tokenHash_key" ON "access"."refresh_token"("tokenHash");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "team_name_key" ON "auth"."team"("name");
+CREATE INDEX "refresh_token_userId_idx" ON "access"."refresh_token"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "refresh_token_tokenHash_key" ON "auth"."refresh_token"("tokenHash");
-
--- CreateIndex
-CREATE INDEX "refresh_token_userId_idx" ON "auth"."refresh_token"("userId");
-
--- CreateIndex
-CREATE INDEX "history_entityType_entityId_idx" ON "auth"."history"("entityType", "entityId");
+CREATE INDEX "history_entityType_entityId_idx" ON "access"."history"("entityType", "entityId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "party_document_key" ON "crm"."party"("document");
@@ -1564,25 +1529,22 @@ CREATE UNIQUE INDEX "work_schedule_one_default_key" ON "timesheet"."work_schedul
 CREATE UNIQUE INDEX "user_schedule_userId_validFrom_key" ON "timesheet"."user_schedule"("userId", "validFrom");
 
 -- AddForeignKey
-ALTER TABLE "ai"."message" ADD CONSTRAINT "message_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "ai"."conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "access"."user_account" ADD CONSTRAINT "user_account_accessProfileId_fkey" FOREIGN KEY ("accessProfileId") REFERENCES "access"."access_profile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "auth"."user_account" ADD CONSTRAINT "user_account_accessProfileId_fkey" FOREIGN KEY ("accessProfileId") REFERENCES "auth"."access_profile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "access"."user_account" ADD CONSTRAINT "user_account_collaboratorId_fkey" FOREIGN KEY ("collaboratorId") REFERENCES "access"."collaborator"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "auth"."user_account" ADD CONSTRAINT "user_account_collaboratorId_fkey" FOREIGN KEY ("collaboratorId") REFERENCES "auth"."collaborator"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "access"."collaborator" ADD CONSTRAINT "collaborator_positionId_fkey" FOREIGN KEY ("positionId") REFERENCES "access"."position"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "auth"."collaborator" ADD CONSTRAINT "collaborator_positionId_fkey" FOREIGN KEY ("positionId") REFERENCES "auth"."position"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "access"."team_member" ADD CONSTRAINT "team_member_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "access"."team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "auth"."team_member" ADD CONSTRAINT "team_member_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "auth"."team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "access"."team_member" ADD CONSTRAINT "team_member_userId_fkey" FOREIGN KEY ("userId") REFERENCES "access"."user_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "auth"."team_member" ADD CONSTRAINT "team_member_userId_fkey" FOREIGN KEY ("userId") REFERENCES "auth"."user_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "auth"."refresh_token" ADD CONSTRAINT "refresh_token_userId_fkey" FOREIGN KEY ("userId") REFERENCES "auth"."user_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "access"."refresh_token" ADD CONSTRAINT "refresh_token_userId_fkey" FOREIGN KEY ("userId") REFERENCES "access"."user_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "crm"."party" ADD CONSTRAINT "party_clientGroupId_fkey" FOREIGN KEY ("clientGroupId") REFERENCES "crm"."client_group"("id") ON DELETE SET NULL ON UPDATE CASCADE;

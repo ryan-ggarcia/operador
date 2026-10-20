@@ -215,7 +215,12 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      `node_modules/next/dist/docs/`.
    - Prisma 7.10, um arquivo por módulo em `backend/prisma/schema/`, migração
      inicial `20261013000000_init` (conferida: `migrate diff` contra o schema
-     vazio) e seed idempotente `prisma/seed.ts` (8 perfis do Operand, status de
+     vazio; em 20/10, antes de existir banco, editada para o schema do `auth`
+     se chamar `access`, porque o Supabase reserva `auth`, e sem as tabelas da
+     `ai`). `deploy/banco.sql`: as migrações + o registro em
+     `_prisma_migrations`, para criar o banco à mão (conferido no PGlite:
+     checksums iguais aos do Prisma, `migrate deploy` sem pendências e
+     `migrate diff` sem diferença). Seed idempotente `prisma/seed.ts` (8 perfis do Operand, status de
      projeto/job/mídia/produção/financeiro, jornada padrão, "Sem encargo",
      formas de pagamento, categorias, conta principal e o dono da conta via
      `OWNER_EMAIL`/`OWNER_PASSWORD`). O perfil "Conversa" ficou de fora (só dá
