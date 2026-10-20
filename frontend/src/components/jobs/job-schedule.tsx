@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/services';
 import type { PostponeInput, RecurrenceRule } from '@/services/projects.service';
+import type { Task } from '@/services/types';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -265,6 +266,72 @@ export function PostponeDialog({
         <DialogFooter>
           <Button disabled={busy || !(Number(amount) >= 1)} onClick={() => void save()}>
             {busy && <Loader2 className="animate-spin" />} Adiar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Escolhe de quais outras tarefas do job esta depende. */
+export function TaskDependenciesDialog({
+  task,
+  tasks,
+  onClose,
+  onDone,
+}: {
+  task: Task;
+  tasks: Task[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [selected, setSelected] = useState<string[]>(() => task.dependsOnIds);
+  const [busy, setBusy] = useState(false);
+  const others = tasks.filter((other) => other.id !== task.id);
+
+  async function save() {
+    setBusy(true);
+    try {
+      await api.jobs.setTaskDependencies(task.id, selected);
+      toast.success('Dependências salvas.');
+      onDone();
+      onClose();
+    } catch (caught) {
+      toast.error((caught as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Depende de</DialogTitle>
+          <DialogDescription>
+            &ldquo;{task.title}&rdquo; só pode ser concluída depois das tarefas marcadas.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+          {others.map((other) => (
+            <label key={other.id} className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={selected.includes(other.id)}
+                onCheckedChange={(checked) =>
+                  setSelected((current) =>
+                    checked === true ? [...current, other.id] : current.filter((id) => id !== other.id),
+                  )
+                }
+              />
+              <span className={other.situation !== 'OPEN' ? 'text-muted-foreground line-through' : ''}>
+                {other.title}
+              </span>
+            </label>
+          ))}
+        </div>
+        <DialogFooter>
+          <Button disabled={busy} onClick={() => void save()}>
+            {busy && <Loader2 className="animate-spin" />} Salvar
           </Button>
         </DialogFooter>
       </DialogContent>

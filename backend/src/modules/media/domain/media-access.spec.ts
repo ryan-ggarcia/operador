@@ -13,6 +13,8 @@ const media = (overrides: Partial<MediaAccessView> = {}): MediaAccessView => ({
   requesterId: 'req',
   memberIds: [],
   sentToFinanceAt: null,
+  projectHidden: false,
+  involvedInProject: false,
   ...overrides,
 });
 
@@ -24,6 +26,15 @@ describe('acesso à mídia', () => {
     expect(canEditMedia('resp', makePermissions({ medias: 3 }), media())).toBe(true);
     expect(canEditMedia('outro', makePermissions({ medias: 6 }), media())).toBe(true);
     expect(canEditMedia('resp', makePermissions({ medias: 2 }), media())).toBe(false);
+  });
+
+  it('mídia de projeto oculto: envolvidos na mídia ou no projeto, e o administrador', () => {
+    const hidden = media({ projectHidden: true, memberIds: ['membro'] });
+    expect(canViewMedia('outro', makePermissions({ medias: 6 }), hidden)).toBe(false);
+    expect(canViewMedia('outro', makePermissions({ medias: 6 }), media({ projectHidden: true, involvedInProject: true }))).toBe(true);
+    expect(canViewMedia('membro', makePermissions({ medias: 2 }), hidden)).toBe(true);
+    expect(canViewMedia('outro', makePermissions({ medias: 7 }), hidden)).toBe(true);
+    expect(canEditMedia('outro', makePermissions({ medias: 6 }), hidden)).toBe(false);
   });
 
   it('enviada ao financeiro ou fechada fica travada', () => {

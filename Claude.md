@@ -268,7 +268,8 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      passam pelo caixa da agência viram lançamento; a mídia fica travada,
      com retrato (snapshot) de cliente, veículo e valores; reabrir o
      faturamento cancela as faturas se nenhuma foi quitada.
-     Pendente na mídia: regra de projeto oculto nas mídias. (PDF do PI feito
+     Projeto oculto (20/10): mesma regra do job, pela fachada de projects
+     (`getHiddenProjectIdsNotInvolving`), filtrado no WHERE da pauta. (PDF do PI feito
      em 19/10; tabelas de preço de TV/rádio descartadas em 20/10.)
    - `finance` (15/10/2026): receitas e despesas à vista, parceladas (sobra
      dos centavos na última; datas mensais sem pular mês) ou recorrentes;
@@ -370,9 +371,9 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
      (`PUT /tasks/:id/dependencies`). Regras em
      `projects/domain/schedule-rules.ts`. Front: "Repetir job" e "Adiar
      prazos" no menu ⋮ do job, selo "Job recorrente X/Y", botão de workflow
-     e selo "bloqueada" nas tarefas. Pendente: editar dependências tarefa a
-     tarefa no front, adiar em lote pela pauta, copiar dependências na
-     recorrência/duplicação.
+     e selo "bloqueada" nas tarefas. Em 20/10: editar dependências tarefa a
+     tarefa no front e adiar em lote pela pauta (seleção múltipla). Fora da
+     v1: copiar dependências na recorrência/duplicação.
    - PI e logo (19/10/2026): página `/midia/:id/pi` para imprimir ou salvar
      em PDF pelo navegador (sem gerar PDF no servidor, sem dependência nova):
      agência com logo, veículo e cliente (razão social, CNPJ, endereço),

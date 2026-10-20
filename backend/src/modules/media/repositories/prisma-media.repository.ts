@@ -144,6 +144,9 @@ export class PrismaMediaRepository implements MediaRepository {
   async list(filter: MediaFilter): Promise<Page<MediaRecord>> {
     const and: Prisma.MediaWhereInput[] = [];
     if (!filter.visibility.readAll || filter.mine) and.push(involvedWhere(filter.visibility.userId));
+    if (filter.visibility.hiddenProjectIds.length) {
+      and.push({ OR: [{ projectId: { notIn: filter.visibility.hiddenProjectIds } }, involvedWhere(filter.visibility.userId)] });
+    }
     if (filter.search) {
       and.push({
         OR: [

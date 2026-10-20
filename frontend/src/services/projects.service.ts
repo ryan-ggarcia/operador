@@ -145,6 +145,10 @@ export class JobsService {
   clearWorkflow(id: string) {
     return this.http.delete<JobDetail>(`/jobs/${id}/workflow`);
   }
+  /** "Depende de": tarefas do mesmo job (o back recusa ciclo). */
+  setTaskDependencies(taskId: string, dependsOnIds: string[]) {
+    return this.http.put<JobDetail>(`/tasks/${taskId}/dependencies`, { dependsOnIds });
+  }
 }
 
 export interface RecurrenceRule {

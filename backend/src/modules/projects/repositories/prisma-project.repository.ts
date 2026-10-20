@@ -147,6 +147,15 @@ export class PrismaProjectRepository implements ProjectRepository {
     return rows.map(toRecord);
   }
 
+  async findHiddenIdsNotInvolving(userId: string, ids?: string[]): Promise<string[]> {
+    if (ids?.length === 0) return [];
+    const rows = await this.prisma.project.findMany({
+      where: { hidden: true, id: ids ? { in: ids } : undefined, NOT: involvedWhere(userId) },
+      select: { id: true },
+    });
+    return rows.map((row) => row.id);
+  }
+
   async isFavorite(id: string, userId: string): Promise<boolean> {
     const count = await this.prisma.projectFavorite.count({ where: { projectId: id, userId } });
     return count > 0;

@@ -76,6 +76,11 @@ export interface ProjectsFacade {
     userId: string,
     access: UserPermissions,
   ): Promise<DocumentRef | null>;
+  /**
+   * Ids dos projetos ocultos em que o usuário não é envolvido (responsável,
+   * solicitante ou membro), entre os informados ou entre todos.
+   */
+  getHiddenProjectIdsNotInvolving(userId: string, projectIds?: string[]): Promise<string[]>;
   /** Ids das tarefas de cada job. */
   getTaskIds(jobIds: string[]): Promise<Record<string, string[]>>;
   /** Ganchos de outros módulos no fechamento de documentos. */

@@ -129,6 +129,10 @@ export class ProjectsFacadeService implements ProjectsFacade {
     return loaded.ref;
   }
 
+  getHiddenProjectIdsNotInvolving(userId: string, projectIds?: string[]): Promise<string[]> {
+    return this.projects.findHiddenIdsNotInvolving(userId, projectIds && [...new Set(projectIds)]);
+  }
+
   async getTaskIds(jobIds: string[]): Promise<Record<string, string[]>> {
     const result: Record<string, string[]> = Object.fromEntries(jobIds.map((id) => [id, []]));
     for (const task of await this.jobs.findTaskIdsByJobs([...new Set(jobIds)])) {

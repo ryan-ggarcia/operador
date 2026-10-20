@@ -1,9 +1,10 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { CalendarClock, Search } from 'lucide-react';
 import { useState } from 'react';
 import { PendingApprovals } from '@/components/approvals';
 import { EmptyState, ErrorMessage, Loading, PageHeader } from '@/components/common';
+import { PostponeDialog } from '@/components/jobs/job-schedule';
 import { JobsTable } from '@/components/jobs/jobs-table';
 import { NewJobDialog } from '@/components/jobs/new-job-dialog';
 import { StatusSelect } from '@/components/pickers';
@@ -38,6 +39,8 @@ export default function JobsPage() {
   const [overdue, setOverdue] = useState(false);
   const [statusId, setStatusId] = useState<string | null>(null);
   const [limit, setLimit] = useState(PAGE);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [postponing, setPostponing] = useState(false);
 
   const jobs = useResource(
     () =>
@@ -51,6 +54,8 @@ export default function JobsPage() {
       }),
     [scope, query, situation, overdue, statusId, limit],
   );
+  // Só vale a seleção dos jobs que estão na tela (os filtros podem ter mudado).
+  const selectedIds = selected.filter((id) => jobs.data?.items.some((job) => job.id === id && job.can.edit));
 
   return (
     <>
@@ -102,7 +107,23 @@ export default function JobsPage() {
         <Label className="flex items-center gap-2 text-sm font-normal">
           <Switch checked={overdue} onCheckedChange={setOverdue} /> Só atrasados
         </Label>
+        {selectedIds.length > 0 && (
+          <Button variant="outline" className="ml-auto" onClick={() => setPostponing(true)}>
+            <CalendarClock /> Adiar prazos ({selectedIds.length})
+          </Button>
+        )}
       </div>
+
+      {postponing && (
+        <PostponeDialog
+          jobIds={selectedIds}
+          onClose={() => setPostponing(false)}
+          onDone={() => {
+            setSelected([]);
+            void jobs.reload();
+          }}
+        />
+      )}
 
       <ErrorMessage error={jobs.error} />
       {jobs.loading && !jobs.data ? (
@@ -113,7 +134,7 @@ export default function JobsPage() {
         jobs.data && (
           <>
             <div className="rounded-lg border">
-              <JobsTable jobs={jobs.data.items} />
+              <JobsTable jobs={jobs.data.items} selected={selectedIds} onSelect={setSelected} />
             </div>
             <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
               <span>

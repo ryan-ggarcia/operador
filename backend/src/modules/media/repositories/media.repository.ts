@@ -112,6 +112,8 @@ export interface MediaDetail extends MediaRecord {
 export interface MediaVisibility {
   userId: string;
   readAll: boolean;
+  /** Projetos ocultos cujas mídias o usuário só vê se envolvido nelas. */
+  hiddenProjectIds: string[];
 }
 
 export interface MediaFilter {

@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, Circle, Loader2, Lock, Pencil, Plus, RotateCcw, Workflow, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, Link2, Loader2, Lock, Pencil, Plus, RotateCcw, Workflow, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -20,6 +20,7 @@ import {
 import { StatusSelect, UserSelect } from '@/components/pickers';
 import { useReferenceData } from '@/components/reference-data';
 import { DocumentTimesheet } from '@/components/timesheet/document-timesheet';
+import { TaskDependenciesDialog } from '@/components/jobs/job-schedule';
 import { JobCopyMenu } from '@/components/templates/copy-menus';
 import { StartTimerButton } from '@/components/timesheet/timer';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +43,7 @@ import {
 } from '@/lib/format';
 import { api } from '@/services';
 import type { JobAction } from '@/services/projects.service';
-import type { JobDetail } from '@/services/types';
+import type { JobDetail, Task } from '@/services/types';
 
 const HISTORY_LABEL: Record<string, string> = {
   title: 'Título',
@@ -147,6 +148,7 @@ function Tasks({ job, onChange }: { job: JobDetail; onChange: () => void }) {
   const { users, user } = useReferenceData();
   const [title, setTitle] = useState('');
   const [responsibleId, setResponsibleId] = useState<string | null>(null);
+  const [dependenciesOf, setDependenciesOf] = useState<Task | null>(null);
 
   async function add(event: React.FormEvent) {
     event.preventDefault();
@@ -211,10 +213,29 @@ function Tasks({ job, onChange }: { job: JobDetail; onChange: () => void }) {
                 </Badge>
               )}
             </span>
+            {job.can.edit && job.tasks.length > 1 && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Dependências de ${task.title}`}
+                title="Depende de"
+                onClick={() => setDependenciesOf(task)}
+              >
+                <Link2 />
+              </Button>
+            )}
             <UserAvatar user={user(task.responsibleId) ?? null} size="sm" />
           </li>
         ))}
       </ul>
+      {dependenciesOf && (
+        <TaskDependenciesDialog
+          task={dependenciesOf}
+          tasks={job.tasks}
+          onClose={() => setDependenciesOf(null)}
+          onDone={onChange}
+        />
+      )}
       {job.can.edit && job.tasks.length > 1 && (
         <div className="flex gap-2">
           {job.tasks.some((task) => task.dependsOnIds.length > 0) ? (

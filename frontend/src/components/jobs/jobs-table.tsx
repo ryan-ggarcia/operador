@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { StatusBadge, UserAvatar } from '@/components/common';
 import { useReferenceData } from '@/components/reference-data';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDeadline, isDueToday } from '@/lib/format';
 import type { Job } from '@/services/types';
@@ -20,13 +21,38 @@ function Deadline({ job }: { job: Job }) {
   return <span className={tone}>{text}</span>;
 }
 
-/** Linhas da pauta: nº, título, prazo, cliente/projeto, responsável, status. */
-export function JobsTable({ jobs, showProject = true }: { jobs: Job[]; showProject?: boolean }) {
+/**
+ * Linhas da pauta: nº, título, prazo, cliente/projeto, responsável, status.
+ * Com `onSelect`, mostra checkboxes (só nos jobs que o usuário pode editar).
+ */
+export function JobsTable({
+  jobs,
+  showProject = true,
+  selected = [],
+  onSelect,
+}: {
+  jobs: Job[];
+  showProject?: boolean;
+  selected?: string[];
+  onSelect?: (ids: string[]) => void;
+}) {
   const { jobStatus } = useReferenceData();
+  const selectable = jobs.filter((job) => job.can.edit).map((job) => job.id);
+  const allChecked = selectable.length > 0 && selectable.every((id) => selected.includes(id));
   return (
     <Table>
       <TableHeader>
         <TableRow>
+          {onSelect && (
+            <TableHead className="w-8">
+              <Checkbox
+                aria-label="Selecionar todos os jobs da página"
+                disabled={selectable.length === 0}
+                checked={allChecked ? true : selected.length > 0 ? 'indeterminate' : false}
+                onCheckedChange={() => onSelect(allChecked ? [] : selectable)}
+              />
+            </TableHead>
+          )}
           <TableHead className="w-10" />
           <TableHead>Job</TableHead>
           <TableHead className="w-28">Prazo</TableHead>
@@ -37,6 +63,18 @@ export function JobsTable({ jobs, showProject = true }: { jobs: Job[]; showProje
       <TableBody>
         {jobs.map((job) => (
           <TableRow key={job.id} className={job.situation !== 'OPEN' ? 'opacity-60' : ''}>
+            {onSelect && (
+              <TableCell>
+                <Checkbox
+                  aria-label={`Selecionar job ${job.number}`}
+                  disabled={!job.can.edit}
+                  checked={selected.includes(job.id)}
+                  onCheckedChange={(checked) =>
+                    onSelect(checked === true ? [...selected, job.id] : selected.filter((id) => id !== job.id))
+                  }
+                />
+              </TableCell>
+            )}
             <TableCell>
               <UserAvatar user={job.responsible} size="sm" />
             </TableCell>

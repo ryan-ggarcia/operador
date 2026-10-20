@@ -1,4 +1,4 @@
-import { canEditOwn, FULL, READ_ALL, type UserPermissions } from '../../auth/public/index.js';
+import { ADMIN, canEditOwn, FULL, READ_ALL, type UserPermissions } from '../../auth/public/index.js';
 
 /** Quem pode o quê numa mídia (permissão `medias`, níveis do Operand). */
 
@@ -8,17 +8,26 @@ export interface MediaAccessView {
   requesterId: string | null;
   memberIds: string[];
   sentToFinanceAt: Date | null;
+  projectHidden: boolean;
+  /** O usuário é envolvido no projeto da mídia. */
+  involvedInProject: boolean;
 }
 
 export function isMediaInvolved(userId: string, media: MediaAccessView): boolean {
   return media.responsibleId === userId || media.requesterId === userId || media.memberIds.includes(userId);
 }
 
-/** Nível 1 vê só as mídias em que está envolvido; 2 ou mais vê todas. */
+/**
+ * Nível 1 vê só as mídias em que está envolvido; 2 ou mais vê todas, menos as
+ * de projeto oculto, que ficam para os envolvidos (na mídia ou no projeto) e
+ * para o administrador do módulo (a mesma regra do job).
+ */
 export function canViewMedia(userId: string, access: UserPermissions, media: MediaAccessView): boolean {
   const level = access.modules.medias;
   if (level === 0) return false;
-  return level >= READ_ALL || isMediaInvolved(userId, media);
+  const involved = isMediaInvolved(userId, media);
+  if (media.projectHidden && !involved && !media.involvedInProject && level < ADMIN) return false;
+  return level >= READ_ALL || involved;
 }
 
 export function canCreateMedia(access: UserPermissions): boolean {

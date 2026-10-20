@@ -93,6 +93,8 @@ export interface ProjectRepository {
   list(filter: ProjectFilter): Promise<Page<ProjectListItem>>;
   findById(id: string): Promise<ProjectRecord | null>;
   findByIds(ids: string[]): Promise<ProjectRecord[]>;
+  /** Projetos ocultos sem o usuário entre os envolvidos (opcionalmente só entre `ids`). */
+  findHiddenIdsNotInvolving(userId: string, ids?: string[]): Promise<string[]>;
   isFavorite(id: string, userId: string): Promise<boolean>;
   create(data: NewProject, actorId: string): Promise<ProjectRecord>;
   /**

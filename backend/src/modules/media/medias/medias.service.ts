@@ -10,7 +10,7 @@ import { diffFields } from '../../../shared/history/diff.js';
 import { sanitizeRichText } from '../../../shared/html/sanitize.js';
 import { endOfLocalDay } from '../../../shared/time/timezone.js';
 import type { Page } from '../../../shared/validation/pagination.js';
-import { AUTH_FACADE, READ_ALL, type AuthFacade, type UserPermissions } from '../../auth/public/index.js';
+import { ADMIN, AUTH_FACADE, READ_ALL, type AuthFacade, type UserPermissions } from '../../auth/public/index.js';
 import { CRM_FACADE, type CrmFacade } from '../../crm/public/index.js';
 import { FINANCE_FACADE, type FinanceFacade, type SourceBill } from '../../finance/public/index.js';
 import { NOTIFICATIONS_FACADE, type NotificationsFacade } from '../../notifications/public/index.js';
@@ -168,6 +168,9 @@ const toDateOnly = (value: string | null | undefined): Date | null | undefined =
   return new Date(`${value}T00:00:00.000Z`);
 };
 
+/** Mídia com o que a regra de acesso precisa saber do projeto. */
+type ViewableMedia = MediaDetail & { projectHidden: boolean; involvedInProject: boolean };
+
 const dateKey = (date: Date | null): string | null => (date ? date.toISOString().slice(0, 10) : null);
 
 /** Mídias (PI): documento, peças, grades, linhas e totais. */
@@ -185,9 +188,13 @@ export class MediasService {
   ) {}
 
   async list(userId: string, access: UserPermissions, query: MediaListQuery): Promise<Page<MediaListView>> {
+    const level = access.modules.medias;
+    // Nível 1 já só vê as mídias em que está envolvido; o administrador vê todas.
+    const hiddenProjectIds =
+      level >= READ_ALL && level < ADMIN ? await this.projects.getHiddenProjectIdsNotInvolving(userId) : [];
     const page = await this.medias.list({
       ...query,
-      visibility: { userId, readAll: access.modules.medias >= READ_ALL },
+      visibility: { userId, readAll: level >= READ_ALL, hiddenProjectIds },
     });
     const names = await this.names(page.items);
     const now = new Date();
@@ -215,11 +222,12 @@ export class MediasService {
     const {
       vehicleId, vehicleContactId, responsibleId, requesterId, memberIds, statusIgnoresDelay,
       projectId, sequence, clientId, grossTotal, bonusTotal, netValue, closedAt, pieces, grids: rawGrids,
+      projectHidden, involvedInProject,
       ...header
     } = media;
     void vehicleId; void responsibleId; void requesterId; void memberIds; void statusIgnoresDelay;
     void projectId; void sequence; void clientId; void grossTotal; void bonusTotal; void netValue;
-    void closedAt; void rawGrids;
+    void closedAt; void rawGrids; void projectHidden; void involvedInProject;
     return {
       ...header,
       ...this.toListView(media, names, new Date()),
@@ -581,13 +589,19 @@ export class MediasService {
 
   // ---------- Apoio ----------
 
-  async requireViewable(userId: string, access: UserPermissions, id: string): Promise<MediaDetail> {
-    const media = await this.medias.findById(id);
-    if (!media || !canViewMedia(userId, access, media)) throw new NotFoundException('Mídia não encontrada.');
+  async requireViewable(userId: string, access: UserPermissions, id: string): Promise<ViewableMedia> {
+    const found = await this.medias.findById(id);
+    if (!found) throw new NotFoundException('Mídia não encontrada.');
+    const project = await this.projects.getProject(found.projectId);
+    const projectHidden = project?.hidden ?? false;
+    const involvedInProject =
+      projectHidden && !(await this.projects.getHiddenProjectIdsNotInvolving(userId, [found.projectId])).length;
+    const media = { ...found, projectHidden, involvedInProject };
+    if (!canViewMedia(userId, access, media)) throw new NotFoundException('Mídia não encontrada.');
     return media;
   }
 
-  private async requireEditable(userId: string, access: UserPermissions, id: string): Promise<MediaDetail> {
+  private async requireEditable(userId: string, access: UserPermissions, id: string): Promise<ViewableMedia> {
     const media = await this.requireViewable(userId, access, id);
     if (!canEditMedia(userId, access, media)) {
       throw new ForbiddenException(
