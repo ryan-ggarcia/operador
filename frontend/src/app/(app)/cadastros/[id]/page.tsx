@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { useResource } from '@/hooks/use-resource';
-import { formatDocument } from '@/lib/format';
+import { formatDocument, maskCpfCnpj, maskPhone, maskZip } from '@/lib/format';
 import { api } from '@/services';
 import type { Party, PartyInput } from '@/services/types';
 
@@ -40,8 +40,18 @@ const FIELDS: { key: keyof PartyInput; label: string; span?: 2 }[] = [
 
 function PartyForm({ party, canEdit, onSaved }: { party: Party; canEdit: boolean; onSaved: (party: Party) => void }) {
   const { can } = useAuth();
+
+  function maskField(key: keyof PartyInput, value: string): string {
+    if (key === 'document') return maskCpfCnpj(value, party.personType);
+    if (key === 'phone1' || key === 'phone2') return maskPhone(value);
+    if (key === 'zipCode') return maskZip(value);
+    return value;
+  }
+
   const [form, setForm] = useState<PartyInput>(() =>
-    Object.fromEntries(FIELDS.map(({ key }) => [key, (party[key as keyof Party] as string | null) ?? ''])),
+    Object.fromEntries(
+      FIELDS.map(({ key }) => [key, maskField(key, (party[key as keyof Party] as string | null) ?? '')]),
+    ),
   );
   const [saving, setSaving] = useState(false);
 
@@ -93,7 +103,7 @@ function PartyForm({ party, canEdit, onSaved }: { party: Party; canEdit: boolean
               disabled={!canEdit}
               required={key === 'name'}
               value={(form[key] as string | undefined) ?? ''}
-              onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+              onChange={(event) => setForm((current) => ({ ...current, [key]: maskField(key, event.target.value) }))}
             />
           </div>
         ))}

@@ -104,6 +104,34 @@ export function formatDocument(value: string | null): string {
   return value;
 }
 
+/** Vai preenchendo um molde ("###.###-##") com os dígitos do que foi digitado. */
+function maskDigits(value: string, template: string): string {
+  const digits = value.replace(/\D/g, '');
+  let out = '';
+  let i = 0;
+  for (const ch of template) {
+    if (i >= digits.length) break;
+    out += ch === '#' ? digits[i++] : ch;
+  }
+  return out;
+}
+
+/** Máscara de CPF (físico) ou CNPJ (jurídico) enquanto digita. */
+export function maskCpfCnpj(value: string, personType: 'PF' | 'PJ'): string {
+  return maskDigits(value, personType === 'PF' ? '###.###.###-##' : '##.###.###/####-##');
+}
+
+/** Máscara de telefone fixo (10 dígitos) ou celular (11). */
+export function maskPhone(value: string): string {
+  const template = value.replace(/\D/g, '').length > 10 ? '(##) #####-####' : '(##) ####-####';
+  return maskDigits(value, template);
+}
+
+/** Máscara de CEP. */
+export function maskZip(value: string): string {
+  return maskDigits(value, '#####-###');
+}
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();

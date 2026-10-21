@@ -39,6 +39,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const MIN_PASSWORD_LENGTH = 8;
 /** Senhas erradas seguidas (por e-mail + IP) antes do bloqueio. */
 const MAX_LOGIN_FAILURES = 3;
+/** Senhas erradas seguidas na mesma conta, somando todos os IPs: freia força bruta com IPs rotativos. */
+const MAX_ACCOUNT_FAILURES = 20;
 const LOGIN_LOCK_MS = 15 * 60 * 1000;
 
 function hashToken(token: string): string {
@@ -68,7 +70,12 @@ export class AuthService {
   async login(email: string, password: string, ip: string): Promise<SessionTokens> {
     const normalized = email.trim().toLowerCase();
     const key = `${ip}|${normalized}`;
-    if (!(await this.attempts.take(key, MAX_LOGIN_FAILURES, LOGIN_LOCK_MS))) {
+    const accountKey = `account|${normalized}`;
+    // shortcut: a trava por conta permite DoS de bloqueio (15 min) de um e-mail conhecido; aceitável nesta ferramenta interna de uma agência, rever se virar público
+    if (
+      !(await this.attempts.take(key, MAX_LOGIN_FAILURES, LOGIN_LOCK_MS)) ||
+      !(await this.attempts.take(accountKey, MAX_ACCOUNT_FAILURES, LOGIN_LOCK_MS))
+    ) {
       throw new HttpException(
         'Muitas tentativas. Tente de novo em 15 minutos.',
         HttpStatus.TOO_MANY_REQUESTS,
@@ -81,6 +88,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     await this.attempts.reset(key);
+    await this.attempts.reset(accountKey);
     await this.repository.markLogin(user.id, new Date());
     return this.issueSession(user);
   }

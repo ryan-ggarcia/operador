@@ -201,6 +201,15 @@ describe('AuthService', () => {
       await expect(service.login('ana@agencia.com', 'segredo', '198.51.100.1')).resolves.toBeDefined();
       await expect(service.login('outro@agencia.com', 'x', IP)).rejects.toBeInstanceOf(UnauthorizedException);
     });
+
+    it('20 senhas erradas de IPs diferentes travam a conta (força bruta com IPs rotativos)', async () => {
+      repository.users.push(makeUser());
+      for (let i = 0; i < 20; i++) {
+        await expect(service.login('ana@agencia.com', 'errada', `10.0.0.${i}`)).rejects.toBeInstanceOf(UnauthorizedException);
+      }
+      // IP novo e senha certa ainda são barrados pela trava de conta.
+      await expect(service.login('ana@agencia.com', 'segredo', '10.0.1.1')).rejects.toEqual(tooMany);
+    });
   });
 
   it('o token de acesso marca a senha provisória até a troca', async () => {

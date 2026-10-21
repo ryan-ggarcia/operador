@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useResource } from '@/hooks/use-resource';
-import { formatDocument } from '@/lib/format';
+import { formatDocument, maskCpfCnpj } from '@/lib/format';
 import { api, ApiError } from '@/services';
 import { ROLES } from '@/components/parties/roles';
 import type { PartyRole } from '@/services/types';
@@ -90,7 +90,13 @@ function NewPartyDialog({ defaultRole, onCreated }: { defaultRole: PartyRole; on
           <div className="grid grid-cols-[120px_1fr] gap-3">
             <div className="grid gap-2">
               <Label>Pessoa</Label>
-              <Select value={personType} onValueChange={(value) => setPersonType(value as 'PJ' | 'PF')}>
+              <Select
+                value={personType}
+                onValueChange={(value) => {
+                  setPersonType(value as 'PJ' | 'PF');
+                  setDocument((d) => maskCpfCnpj(d, value as 'PJ' | 'PF'));
+                }}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -102,7 +108,11 @@ function NewPartyDialog({ defaultRole, onCreated }: { defaultRole: PartyRole; on
             </div>
             <div className="grid gap-2">
               <Label htmlFor="party-document">{personType === 'PJ' ? 'CNPJ' : 'CPF'}</Label>
-              <Input id="party-document" value={document} onChange={(e) => setDocument(e.target.value)} />
+              <Input
+                id="party-document"
+                value={document}
+                onChange={(e) => setDocument(maskCpfCnpj(e.target.value, personType))}
+              />
             </div>
           </div>
           <div className="grid gap-2">
