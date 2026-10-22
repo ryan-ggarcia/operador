@@ -426,6 +426,17 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
    `docs/operand/midia.md` (2.8) e `producao.md` (2.9); registro técnico em
    `C:\Users\Iberika\operand-rea\saida\rea\achados-faturamento.md`. O legado
    (app3) exige login próprio; a guarda de escrita libera só o login.
+6. Carga do Operand no Supabase (22/10/2026, pedido do usuário; muda a
+   decisão de não migrar dados): `ferramentas/exportar.js` (base do `rea`,
+   só GET) gerou `dados-operand/` (fora do Git, dados reais) e
+   `backend/prisma/import-operand.ts` gravou numa transação só (recusa rodar
+   se já houver projetos; `--dry-run` simula): 94 usuários (senha
+   desconhecida: o administrador define uma provisória; perfil inferido dos
+   níveis do Operand), 88 clientes, 2.717 projetos ativos com o número do
+   Operand (1.830 sem movimento desde 22/10/2025 entraram arquivados, com os
+   jobs concluídos), 2.835 jobs (briefing HTML virou texto) e 17.429
+   tarefas. Fora da carga: horas, comentários, anexos, histórico, jobs
+   concluídos, mídias, dependências entre tarefas.
 
 ---
 

@@ -1,2 +1,5 @@
 /node_modules
 /deploy/.env
+
+# dados reais exportados do Operand (clientes, valores)
+dados-operand/
