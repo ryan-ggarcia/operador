@@ -436,7 +436,18 @@ cadastrados pelo próprio usuário; não é preciso extrair nem migrar dados.
    Operand (1.830 sem movimento desde 22/10/2025 entraram arquivados, com os
    jobs concluídos), 2.835 jobs (briefing HTML virou texto) e 17.429
    tarefas. Fora da carga: horas, comentários, anexos, histórico, jobs
-   concluídos, mídias, dependências entre tarefas.
+   concluídos, dependências entre tarefas.
+   Mídias (22/10/2026): o detalhe só existe no legado (página `/media/:id`
+   do app3, JSON embutido, campos em base64), exportado em
+   `dados-operand/midias.jsonl`; `backend/prisma/import-operand-midias.ts`
+   gravou 6.202 mídias (peças, 6.250 grades, 9.090 linhas, condições de
+   faturamento; totais pela conta do operador), 1.101 veículos (CNPJ
+   repetido vira cadastro sem documento), 116 projetos fechados que tinham
+   mídia, 55 redes, 264 programas (todos os dias da semana) e 64 praças.
+   Mídias de projeto arquivado entram concluídas. Diferença conhecida: em
+   26 linhas com desconto em %, o operador arredonda o desconto e o Operand
+   o total da linha (1 centavo); corrigir em `media-math.ts` à parte.
+   Fora: preferências de PDF e envio ao financeiro.
 
 ---
 

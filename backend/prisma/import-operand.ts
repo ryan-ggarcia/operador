@@ -5,58 +5,23 @@
 //   npx tsx prisma/import-operand.ts --dry-run   (valida no banco e desfaz)
 //   npx tsx prisma/import-operand.ts
 import 'dotenv/config';
-import assert from 'node:assert';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, type Prisma } from '../src/generated/prisma/client.js';
 import { ScryptPasswordHasher } from '../src/modules/auth/password/scrypt-password-hasher.js';
+import { htmlToText, operandDate as date, readOperand as read } from './operand-common.js';
 
-const DIR = new URL('../../dados-operand/', import.meta.url);
 const DRY = process.argv.includes('--dry-run');
 // Projetos sem nenhuma alteração (projeto, jobs ou tarefas) desde esta data entram arquivados.
 const STALE_BEFORE = '2025-10-22';
 // Perfil do Operand (id) → perfil do operador; inferido pelos níveis de cada um. 1 = Conversa (fora da v1).
 const PROFILES: Record<number, string> = { 2: 'Criativo', 4: 'Total', 5: 'Criativo', 7: 'Administrador', 8: 'Total' };
 
-const read = (name: string) => JSON.parse(readFileSync(new URL(name, DIR), 'utf8'));
 const operandUsers: any[] = read('usuarios.json');
 const operandClients: any[] = read('clientes.json');
 const operandProjects: any[] = read('projetos.json');
 const operandJobs: any[] = Object.values(read('jobs.json'));
 const operandStatuses: { projeto: any[] } = read('status.json');
-
-/** "2026-10-21 23:59:59" no fuso da agência; "0000-00-00 ..." = vazio. */
-// shortcut: fixo em -03:00, datas antigas do horário de verão (até 2019) ficam 1 h deslocadas; irrelevante para prazos.
-function date(value: string | null | undefined): Date | null {
-  if (!value || value.startsWith('0000')) return null;
-  return new Date(value.replace(' ', 'T') + '-03:00');
-}
-
-/** Briefing do Operand é HTML; o operador guarda texto puro (e nunca renderiza HTML). */
-function htmlToText(html: string | null | undefined): string | null {
-  if (!html) return null;
-  const text = html
-    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '\n- ')
-    .replace(/<\/(p|div|h[1-6]|li|tr|blockquote)>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&amp;/g, '&')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  return text || null;
-}
-assert.equal(
-  htmlToText('<p>Oi&nbsp;<b>A&amp;B</b></p><ul><li>um</li></ul><img src="data:image/png;base64,AAA">x &#233;'),
-  'Oi A&B\n\n- um\nx é',
-);
-assert.equal(date('0000-00-00 00:00:00'), null);
-assert.equal(date('2026-10-21 23:59:59')!.toISOString(), '2026-10-22T02:59:59.000Z');
 
 const digits = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '') || null;
 const tasksOf = (job: any): any[] => (Array.isArray(job.tarefas) ? job.tarefas : []);
